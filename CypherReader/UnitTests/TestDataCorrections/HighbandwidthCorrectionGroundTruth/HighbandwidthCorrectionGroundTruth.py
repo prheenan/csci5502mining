@@ -3,20 +3,11 @@ from __future__ import division
 # This file is used for importing the common utilities classes.
 import numpy as np
 import matplotlib.pyplot as plt
-# need to add the utilities class. Want 'home' to be platform independent
-from os.path import expanduser
-home = expanduser("~")
-# get the utilties directory (assume it lives in ~/utilities/python)
-# but simple to change
-path= home +"/utilities/python"
 import sys
-sys.path.append(path)
 sys.path.append("../../../")
 sys.path.append("../../../../")
-# import the patrick-specific utilities
-import GenUtilities  as pGenUtil
-import PlotUtilities as pPlotUtil
-import CheckpointUtilities as pCheckUtil
+import CypherReader.Util.PlotUtilities as pPlotUtil
+
 from CypherReader.IgorAdapter import PxpLoader,ProcessSingleWave
 from PyUtil import CypherUtil
 from CypherReader.ReaderModel.DataCorrection.InterferenceCorrection import \
@@ -28,9 +19,28 @@ from CypherReader.ReaderModel.DataCorrection.OffsetCorrection import \
 from CypherReader.ReaderModel.DataCorrection import \
     CorrectionMethods as CorrectionMethods
 
-# indices of everything, absolute, of high and low res
+# indices of everything, absolute, of high and low res touchoffs
 idxLowRes = np.array([37430,86999])
 idxHighRes = np.array([3773000,8729900])
+idxRuptureEvents = [
+    # the touchoff / offset
+    9023035,
+    # first rupture
+    9606315,
+    9606338,
+    # second rupture
+    9714683,
+    9714699,
+    # thirs rupture
+    9881285,
+    9881307,
+    # fourth rupture
+    10100453,
+    10100474,
+    # final rupture (detachment)
+    10354854,
+    10354879
+    ]
 
 def GetZsnsr(allData):
     """

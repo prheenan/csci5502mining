@@ -3,12 +3,12 @@ from __future__ import division
 # This file is used for importing the common utilities classes.
 import numpy as np
 import matplotlib.pyplot as plt
-from os.path import expanduser
 import sys
 sys.path.append("../../../../")
 sys.path.append("../../../")
 sys.path.append("../../")
 sys.path.append("../")
+import CypherReader.Util.PlotUtilities as pPlotUtil
 
 from CypherReader.UnitTests.TestDataCorrections.\
     HighbandwidthCorrectionGroundTruth.HighbandwidthCorrectionGroundTruth\

@@ -4,17 +4,7 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 
-from os.path import expanduser
-home = expanduser("~")
-# get the utilties directory (assume it lives in ~/utilities/python)
-# but simple to change
-path= home +"/utilities/python"
 import sys
-sys.path.append(path)
-# import the patrick-specific utilities
-import GenUtilities  as pGenUtil
-import PlotUtilities as pPlotUtil
-import CheckpointUtilities as pCheckUtil
 import pyqtgraph as pg
 import IgorAdapter.PxpLoader
 

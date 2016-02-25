@@ -3,20 +3,12 @@ from __future__ import division
 # This file is used for importing the common utilities classes.
 import numpy as np
 import matplotlib.pyplot as plt
-# need to add the utilities class. Want 'home' to be platform independent
-from os.path import expanduser
-home = expanduser("~")
-# get the utilties directory (assume it lives in ~/utilities/python)
-# but simple to change
-path= home +"/utilities/python"
-import sys
-sys.path.append(path)
-# import the patrick-specific utilities
-import GenUtilities  as pGenUtil
-import PlotUtilities as pPlotUtil
-import CheckpointUtilities as pCheckUtil
+import CypherReader.Util.IgorUtil as IgorUtil
+import CypherReader.Util.GenUtilities as pGenUtil
+
 import pyqtgraph as pg
-import IgorUtil
+
+import CypherReader.Util.PlotUtilities as pPlotUtil
 from pyqtgraph.Qt import QtCore, QtGui
 
 
@@ -87,14 +79,29 @@ class PlotHandler:
         self.PlotTop.scene().sigMouseMoved.connect(self.mouseMoved)
         self.PlotTop.scene().sigMouseClicked.connect(self.upperMouseClicked)
         self.PlotBottom.scene().sigMouseClicked.connect(self.lowerMouseClicked)
-        self.PlotBottom.sigYRangeChanged.connect(self.BottomYChanged)
+        self.PlotBottom.sigYRangeChanged.connect(self.YChanged)
+        self.PlotTop.sigYRangeChanged.connect(self.YChanged)
         self.handler = ControllerHook
         self.CurrentPoint = None
-    def BottomYChanged(self,viewBot,yRange):
+    def YChanged(self,viewBot,yRange):
         """
         Called with the bottom y changes
         """
-        pass
+        print("y")
+        yminPlot,ymaxPlot = viewBot.childrenBounds()[1]
+
+        print("x")
+        print(viewBot.childrenBounds()[0])
+        print("new")
+        print(yRange)
+        # get the y range accotding to this region...
+        changedMin = yRange[0]
+        changedMax = yRange[1]
+        # clip the min and max to the actual data plotted
+        minY = max(changedMin,yminPlot)
+        maxY = min(changedMax,ymaxPlot)
+        viewBot.setYRange(minY,maxY,padding=None)
+        
     def AddDecorators(self):
         """
         Assuming they have been created, adds the various plot decorators
@@ -347,24 +354,31 @@ class PlotHandler:
                 return
             # POST: within the region. zoom in by a factor
             factor = 2
-            rangeV = maxR-minR
-            divRange = 2*factor # we want the go symmetrically from the midpoint
-            mid = (minR+maxR)/2
-            newRegion = [mid-rangeV/(divRange),mid+rangeV/(divRange)]
-            self.updateRegion(None,[newRegion])
-            self.RefreshTopPlot(firstPlot=False)
-            # check if we need to update the bottom range. say if it is 10% or
-            # less XXX make this an option
-            fraction = 0.1
-            bottomX,_ = self.PlotBottom.viewRange()
-            rangeBottom = bottomX[1]-bottomX[0]
-            bottomFraction = rangeV/rangeBottom
-            if bottomFraction < fraction:
-                minX = mid-rangeV * (fraction/bottomFraction)
-                maxX = mid+rangeV * (fraction/bottomFraction)
-                # refresh the bottom plot, to decrease decimation
-                self.PlotBottom.setXRange(minX, maxX, padding=0)
-
+            self.ZoomRoi(ROI,factor)
+    def ZoomRoi(self,ROI,factor):
+        """
+        Given a region and zoom factor, updates the ROI
+        """
+        minR = ROI[0]
+        maxR = ROI[1]
+        rangeV = maxR-minR
+        divRange = 2*factor # we want the go symmetrically from the midpoint
+        mid = (minR+maxR)/2
+        newRegion = [mid-rangeV/(divRange),mid+rangeV/(divRange)]
+        self.updateRegion(None,[newRegion])
+        self.RefreshTopPlot(firstPlot=False)
+        # check if we need to update the bottom range. say if it is 10% or
+        # less XXX make this an option
+        fraction = 0.1
+        bottomX,_ = self.PlotBottom.viewRange()
+        rangeBottom = bottomX[1]-bottomX[0]
+        bottomFraction = rangeV/rangeBottom
+        if bottomFraction < fraction:
+            minX = mid-rangeV * (fraction/bottomFraction)
+            maxX = mid+rangeV * (fraction/bottomFraction)
+            # refresh the bottom plot, to decrease decimation
+            self.PlotBottom.setXRange(minX, maxX, padding=0)
+          
     def upperMouseClicked(self,evt):
         """
         Wrapper for a mouse clicked event for the upper plot

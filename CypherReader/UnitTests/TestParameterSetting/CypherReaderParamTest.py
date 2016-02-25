@@ -3,28 +3,18 @@ from __future__ import division
 # This file is used for importing the common utilities classes.
 import numpy as np
 import matplotlib.pyplot as plt
-# need to add the utilities class. Want 'home' to be platform independent
-from os.path import expanduser
-home = expanduser("~")
-# get the utilties directory (assume it lives in ~/utilities/python)
-# but simple to change
-path= home +"/utilities/python"
 import sys
-sys.path.append(path)
 sys.path.append("../")
 sys.path.append("../../")
 sys.path.append("../../../")
-# import the patrick-specific utilities
-import GenUtilities  as pGenUtil
-import PlotUtilities as pPlotUtil
-import CheckpointUtilities as pCheckUtil
 import PyUtil.SqlUtil as SqlUtil
 import ReaderController.Controller as Controller
 from ReaderModel.HighBandwidthFoldUnfold import HighBandwidthModel as HighBw
 import pyqtgraph as pg
 import UnitTests.TestSqlPushing.SqlTestUtil as SqlTestUtil
 from UnitTests.TestDataCorrections.HighbandwidthCorrectionGroundTruth.\
-    HighbandwidthCorrectionGroundTruth import idxLowRes,idxHighRes
+    HighbandwidthCorrectionGroundTruth import idxLowRes,idxHighRes,\
+    idxRuptureEvents
 
 def GuiLoaded(EventWindow):
     """
@@ -59,16 +49,19 @@ def GuiLoaded(EventWindow):
     start = 1
     # make an array of indices for where we clicked (reverse just so it
     # reads properly / not so crazy)
-    idx = list(idxLowRes) + list(idxHighRes)
+    idx = list(idxLowRes) + list(idxHighRes) + list(idxRuptureEvents)
     # show that the used clicked at all the indices
     map(EventWindow.UserClickedAtIndex,idx)
     # check that we actually pushed it...
     idNamespace = waveDataGroup.SqlIds
     ParamMeta = EventWindow.Model.ParamMeta
+    # XXX make sure the indices are what we actually put
     ParamVals = EventWindow.Model.CurrentParams
+    idxToPush = [p.index for p in ParamVals]
+    assert np.allclose(idxToPush,idx) , "Model picked wrong parameters."
     SqlObj = SqlUtil.InitSqlGetSessionAndClasses()
-    #SqlTestUtil.AssertCorrectlyPushed(idNamespace,waveDataGroup,ParamVals,
-    #                                  ParamMeta,SqlObj)
+    SqlTestUtil.AssertCorrectlyPushed(idNamespace,waveDataGroup,ParamVals,
+                                      ParamMeta,SqlObj)
     # POST: all done
     #exit(1)
 

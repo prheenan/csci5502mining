@@ -3,18 +3,7 @@ from __future__ import division
 # This file is used for importing the common utilities classes.
 import numpy as np
 import matplotlib.pyplot as plt
-# need to add the utilities class. Want 'home' to be platform independent
-from os.path import expanduser
-home = expanduser("~")
-# get the utilties directory (assume it lives in ~/utilities/python)
-# but simple to change
-path= home +"/utilities/python"
 import sys
-sys.path.append(path)
-# import the patrick-specific utilities
-import GenUtilities  as pGenUtil
-import PlotUtilities as pPlotUtil
-import CheckpointUtilities as pCheckUtil
 from ReaderModel.Generic.Model import Model,WaveDataGroup,\
     CreateWaveObjsForCorrectedHiResSepForce
 from ReaderModel.Generic.StateMachine import StateDict
@@ -78,7 +67,7 @@ class HighBandwidthModel(Model):
                                                   IsPreProcess=True)
         ParamMeta.AddParamMeta("Surface Location")
         # add in all the ruptures
-        for i in range(4):
+        for i in range(5):
             ParamMeta.AddParamMeta("Rupture {:d} Start".format(i))
             ParamMeta.AddParamMeta("Rupture {:d} End".format(i))
         # fill out the state dictionary with <param>:<function> pairs

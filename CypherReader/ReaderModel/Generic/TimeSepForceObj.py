@@ -3,7 +3,6 @@ from __future__ import division
 # This file is used for importing the common utilities classes.
 import numpy as np
 import matplotlib.pyplot as plt
-# need to add the utilities class. Want 'home' to be platform independent
 
 from WaveDataGroup import WaveDataGroup
 

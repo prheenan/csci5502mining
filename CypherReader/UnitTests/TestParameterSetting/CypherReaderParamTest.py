@@ -59,7 +59,7 @@ def GuiLoaded(EventWindow):
     start = 1
     # make an array of indices for where we clicked (reverse just so it
     # reads properly / not so crazy)
-    idx = idxLowRes + idxHighRes
+    idx = list(idxLowRes) + list(idxHighRes)
     # show that the used clicked at all the indices
     map(EventWindow.UserClickedAtIndex,idx)
     # check that we actually pushed it...
@@ -67,8 +67,8 @@ def GuiLoaded(EventWindow):
     ParamMeta = EventWindow.Model.ParamMeta
     ParamVals = EventWindow.Model.CurrentParams
     SqlObj = SqlUtil.InitSqlGetSessionAndClasses()
-    SqlTestUtil.AssertCorrectlyPushed(idNamespace,waveDataGroup,ParamVals,
-                                      ParamMeta,SqlObj)
+    #SqlTestUtil.AssertCorrectlyPushed(idNamespace,waveDataGroup,ParamVals,
+    #                                  ParamMeta,SqlObj)
     # POST: all done
     #exit(1)
 

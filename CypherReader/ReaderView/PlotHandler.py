@@ -87,8 +87,14 @@ class PlotHandler:
         self.PlotTop.scene().sigMouseMoved.connect(self.mouseMoved)
         self.PlotTop.scene().sigMouseClicked.connect(self.upperMouseClicked)
         self.PlotBottom.scene().sigMouseClicked.connect(self.lowerMouseClicked)
+        self.PlotBottom.sigYRangeChanged.connect(self.BottomYChanged)
         self.handler = ControllerHook
         self.CurrentPoint = None
+    def BottomYChanged(self,viewBot,yRange):
+        """
+        Called with the bottom y changes
+        """
+        pass
     def AddDecorators(self):
         """
         Assuming they have been created, adds the various plot decorators
@@ -105,8 +111,8 @@ class PlotHandler:
         self.PlotBottom.addItem(self.region, ignoreBounds=True)
     #for next line, see (this is an undocumented function! :
     #https://groups.google.com/forum/#!msg/pyqtgraph/d2uqHW-mFxA/oYmqkTbpd1gJ
-        self.PlotTop.setAutoVisible(y=True)
-        self.PlotBottom.setAutoVisible(y=True)
+        self.PlotTop.setAutoVisible(x=True,y=True)
+        self.PlotBottom.setAutoVisible(x=True,y=True)
     def SetNormedX(self,X):
         """
         Normalizes and Sets the current X. Remembers how to denorm for this X
@@ -129,6 +135,20 @@ class PlotHandler:
             THe denormalized X
         """
         return X + self.AbsMin
+    def GetBoundingIdx(self,region):
+        """
+        Given a region, gets the bounding indices for it. Intended for plotting 
+        only, not anything sciency (ie: this rounds and such)
+
+        Args:
+            region: the region of a plot
+        Returns:
+            tuple of idxI,idxF, corresponding to x values
+        """
+        idxI = self.handler.GetIndexFromPlotXY(self.DeNormX(min(region)),None)
+        idxF = self.handler.GetIndexFromPlotXY(self.DeNormX(max(region)),None)
+        return idxI,idxF
+
     def RefreshBottomPlot(self):
         """
         Refreshes the bottom plot only. See 'refreshPlot' for details
@@ -140,6 +160,7 @@ class PlotHandler:
         """
         nPoints = self.PlotX.size
         maxPoints = self.PlotOpt.MaxNumPoints
+        bottomX,_ = self.PlotBottom.viewRange()
         if (nPoints > maxPoints):
             decimationFactor = int(np.ceil(nPoints/maxPoints))
             # get the 'decimated' versions for the bottom plot
@@ -169,8 +190,7 @@ class PlotHandler:
         if (nPoints > maxPoints):
             # get the 'zoomed in' versions for the top plot
             minX,maxX = self.region.getRegion()
-            idxI = self.handler.GetIndexFromPlotXY(self.DeNormX(minX),None)
-            idxF = self.handler.GetIndexFromPlotXY(self.DeNormX(maxX),None)
+            idxI,idxF = self.GetBoundingIdx([minX,maxX])
             avg = (idxF+idxI)/2
             # center the indices
             minIdx =max(0,avg-maxPoints/2)
@@ -342,7 +362,9 @@ class PlotHandler:
             if bottomFraction < fraction:
                 minX = mid-rangeV * (fraction/bottomFraction)
                 maxX = mid+rangeV * (fraction/bottomFraction)
+                # refresh the bottom plot, to decrease decimation
                 self.PlotBottom.setXRange(minX, maxX, padding=0)
+
     def upperMouseClicked(self,evt):
         """
         Wrapper for a mouse clicked event for the upper plot

@@ -230,6 +230,7 @@ def AssertLinkersCorrect(ids,mSqlObj):
                  (mCls.TraceMeta,lambda x: x.idTraceRating),
                  (mCls.TraceMeta,lambda x: x.idSample)]
     for tab in tableTest:
+        # pass the session, table, and id to check 
         AssertLinkerTableMatches(sess,tab[0],tab[1],filterFunc,ids)
 
 def AssertLinkerTableMatches(sess,sqlTable,checkIdFunc,filterFunc,idList):

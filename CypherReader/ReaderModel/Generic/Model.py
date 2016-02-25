@@ -93,17 +93,12 @@ class Model(object):
         """
         # see if we have to make a transition
         # XXX add in current state to dictionry
-        print("param")
-        print(CurrentParamNum)
         if CurrentParamNum in self.StateDict:
             # then make the transition!
             mObj = self.StateDict[CurrentParamNum]
             # call the function
             mObj.func()
             # set the state
-            print("made....")
-            print(self.currentState)
-            print(mObj.stateToSet)
             self.currentState = mObj.stateToSet
             self.CurrentX,self.CurrentY = self.getDataToPlot(self.CurrentWave())
             # plot everything again...
@@ -311,10 +306,9 @@ class Model(object):
         else:
             # can simply add
             self.CurrentParams.append(newDat)
-        print(self.CurrentParamNum)
         # let the specific model know what parameters we just used.
-        self.ParameterMade(wrapIdx, self.CurrentParamNum % nParams)
         self.CurrentParamNum += 1
+        self.ParameterMade(wrapIdx, self.CurrentParamNum % nParams)
         if (self.AutoUpdate and self.CurrentParamNum >= nParams):
             self.PushToDatabase()
         return wrapIdx
@@ -329,7 +323,6 @@ class Model(object):
         Returns:
             None
         """
-        print("add..")
         AssertIntegral(index)
         # POST: index is integral
         # XXX TODO: check in bounds? 

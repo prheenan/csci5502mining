@@ -50,6 +50,8 @@ class StateDict:
         return self.mDict[index]
     def __contains__(self,index):
         return index in self.mDict
+    def keys(self):
+        return self.mDict.keys()
 
 if __name__ == "__main__":
     run()

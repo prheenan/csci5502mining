@@ -5,6 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 sys.path.append("../../../")
+sys.path.append("../../")
+sys.path.append("../")
+sys.path.append("./")
 
 from HighBandwidthUtil import GetLabelledObject
 

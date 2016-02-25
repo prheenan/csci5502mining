@@ -113,18 +113,13 @@ class HighBandwidthModel(Model):
             assert False , "Reached plotting state when started"
         elif (self.currentState == States.lowResOffset):
             # plot low res force vs time
-            print("low res ")
             time,sep,force = WaveDict.CreateTimeSepForceWaveObject().\
                              GetTimeSepForceAsCols()
             return time,force
         elif (self.currentState == States.hiResOffset):
-            print("hi res")
             force = WaveDict.HighBandwidthGetForce()
             # time asscociated with force is x
             time = WaveDict.HighBandwidthWaves.values()[0].GetXArray()
-            print("offset")
-            print(force.size)
-            print(time.size)
             return time,force
         else:
             force = self.highForce

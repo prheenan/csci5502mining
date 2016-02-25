@@ -27,7 +27,10 @@
 *.hdf
 *.pxp
 *CypherFunctionRegex/*
-*Demos/*
+*Demos/MoleculeDetector/*
+*Demos/PyQt/*
+*Demos/SurfaceDetector/*
+*Demos/WlcAnalysis/*
 *SqlAutoGen/*
 *SqlModels/*
 *SurfaceDetection/*

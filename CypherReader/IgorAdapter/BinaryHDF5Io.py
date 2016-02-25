@@ -17,7 +17,7 @@ import GenUtilities  as pGenUtil
 import PlotUtilities as pPlotUtil
 import CheckpointUtilities as pCheckUtil
 import PyUtil.HDF5Util as HDF5Util
-from ReaderModel.Generic.WaveDataGroup import WaveDataGroup
+from CypherReader.ReaderModel.Generic.WaveDataGroup import WaveDataGroup
 import ProcessSingleWave
 import PxpLoader
 from multiprocessing import Pool

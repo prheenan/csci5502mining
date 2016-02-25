@@ -21,7 +21,7 @@ import PyUtil.HDF5Util as HDF5Util
 import copy
 import argparse as ap
 import TraceMetaConverter
-import IgorAdapter.BinaryHDF5Io as BinaryHDF5Io
+import CypherReader.IgorAdapter.BinaryHDF5Io as BinaryHDF5Io
 from sqlalchemy import MetaData,and_
 import copy
 

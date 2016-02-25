@@ -10,17 +10,21 @@ sys.path.append("../../../")
 sys.path.append("../../")
 sys.path.append("../")
 
-from HighbandwidthCorrectionGroundTruth.HighbandwidthCorrectionGroundTruth\
+from CypherReader.UnitTests.TestDataCorrections.\
+    HighbandwidthCorrectionGroundTruth.HighbandwidthCorrectionGroundTruth\
     import LoadHiResData,GetTimesAndForce,GetZsnsr,idxLowRes,idxHighRes
 from PyUtil.CypherUtil import GetSepForce
-from ReaderModel.DataCorrection import CorrectionMethods as CorrectionMethods
-from ReaderModel.Generic.Model import CreateWaveObjsForCorrectedHiResSepForce
-from ReaderModel.Generic.WaveDataGroup import WaveDataGroup
+from CypherReader.ReaderModel.DataCorrection import \
+    CorrectionMethods as CorrectionMethods
+from CypherReader.ReaderModel.Generic.Model import \
+    CreateWaveObjsForCorrectedHiResSepForce
+from CypherReader.ReaderModel.Generic.WaveDataGroup import WaveDataGroup
 
-from ReaderModel.DataCorrection.InterferenceCorrection import GetCorrectedHiRes
-from ReaderModel.DataCorrection.OffsetCorrection import \
+from CypherReader.ReaderModel.DataCorrection.InterferenceCorrection import \
+    GetCorrectedHiRes
+from CypherReader.ReaderModel.DataCorrection.OffsetCorrection import \
     CorrectAndInteprolateZsnsr
-from IgorAdapter.ProcessSingleWave import WaveObj
+from CypherReader.IgorAdapter.ProcessSingleWave import WaveObj
 
 """
 Assuming that the 'usual' corrections work well,
@@ -67,7 +71,7 @@ def GetOriginalAndCorrected(allData):
                                              timeOffset,highResTime)
     return lowResTime,lowResSep,lowResForce,highResTime,sepExpected,\
         highCorrForce,highResForce
-    
+
 def run():    
     """
     Assuming that the base-level corrections work, tests the the model is still

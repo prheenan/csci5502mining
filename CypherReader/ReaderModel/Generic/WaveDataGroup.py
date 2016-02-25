@@ -1,4 +1,4 @@
-from IgorAdapter import ProcessSingleWave as ProcessSingleWave
+from CypherReader.IgorAdapter import ProcessSingleWave as ProcessSingleWave
 import PyUtil.CypherUtil as CypherUtil
 
 # Class for storing associated waves from a known data file

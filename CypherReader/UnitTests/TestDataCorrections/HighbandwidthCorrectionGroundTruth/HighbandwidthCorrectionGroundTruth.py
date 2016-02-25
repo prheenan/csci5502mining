@@ -17,15 +17,16 @@ sys.path.append("../../../../")
 import GenUtilities  as pGenUtil
 import PlotUtilities as pPlotUtil
 import CheckpointUtilities as pCheckUtil
-from IgorAdapter import PxpLoader,ProcessSingleWave
+from CypherReader.IgorAdapter import PxpLoader,ProcessSingleWave
 from PyUtil import CypherUtil
-from ReaderModel.DataCorrection.InterferenceCorrection import \
+from CypherReader.ReaderModel.DataCorrection.InterferenceCorrection import \
     GetCorrectedHiRes,DEF_POLYFIT
 
-from ReaderModel.DataCorrection.OffsetCorrection import \
+from CypherReader.ReaderModel.DataCorrection.OffsetCorrection import \
     CorrectAndInteprolateZsnsr
 
-from ReaderModel.DataCorrection import CorrectionMethods as CorrectionMethods
+from CypherReader.ReaderModel.DataCorrection import \
+    CorrectionMethods as CorrectionMethods
 
 # indices of everything, absolute, of high and low res
 idxLowRes = np.array([37430,86999])
@@ -412,16 +413,16 @@ def DemoLowResPlot(allData):
     pPlotUtil.lazyLabel("Time (seconds)","Force [pN]","Protein Unfolding Curve")
     pPlotUtil.savefig(fig,"./output_demoFig.png")
 
-def LoadHiResData():
+def LoadHiResData(dataFile="../../LocalData/NUG2TestData.pxp"):
     """
     Loads in the high resolution data
 
     Args:
-        None
+        dataFile: Where the data lives
     Returns:
         WaveGroup object of the high res data
     """
-    data = "../../LocalData/NUG2TestData.pxp"
+    data = dataFile
     return PxpLoader.LoadPxp(data)
 
 

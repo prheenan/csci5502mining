@@ -30,7 +30,8 @@ DATA_EXT = ["Defl","DeflV","Force","Sep","ZSnsr"]
 TEXT_ENCODING = "utf-8"
 import re
 import copy
-
+# ending for concatenated waves
+ENDING_CONCAT = "Concat"
 
 # make a verbose pattern for getting names
 IgorNamePattern = re.compile(r"""
@@ -157,7 +158,6 @@ class WaveObj:
         Returns:
             A new WaveObj structure
         """
-        self.isConcat = False # initially, assume not concatenated
         if (record is not None):
             # then we are loading from a pxp file; get all the information
             # we need.
@@ -187,6 +187,9 @@ class WaveObj:
             self.DataY = DataY
         else:
             raise ValueError("Must be passed either raw .pxp xor Note and Data")
+        # determine if we were concatenated
+        self.isConcat = self.Name().endswith(ENDING_CONCAT)
+                
     def SourceFilename(self):
         """
         Returns the source file for this wave
@@ -269,7 +272,7 @@ class WaveObj:
         # get the preamble and digit associated with out name
         preamble,digit,_ = IgorNameRegex(oldName)
         # essentially just replace whatever it was by "concat"
-        newName = preamble + digit + "Concat"
+        newName = preamble + digit + ENDING_CONCAT
         self.isConcat = True
         self.SetName(newName)
     def GetTimeSepForceAsCols(self):

@@ -19,14 +19,15 @@ import PyUtil.CypherUtil as CypherUtil
 import Parameter 
 import abc
 import os
-import ReaderModel.SqlDataModel.SqlDataModel as SqlDataModel
+import CypherReader.ReaderModel.SqlDataModel.SqlDataModel as SqlDataModel
 from PyUtil import SqlUtil
-from IgorAdapter.BinaryHDF5Io import ConcatenateWaves
-from IgorAdapter.ProcessSingleWave import WaveObj
-from UnitTests.TestingUtil.UnitTestUtil import AssertIntegral
+from CypherReader.IgorAdapter.BinaryHDF5Io import ConcatenateWaves
+from CypherReader.IgorAdapter.ProcessSingleWave import WaveObj
+from CypherReader.UnitTests.TestingUtil.UnitTestUtil import AssertIntegral
 
 from WaveDataGroup import WaveDataGroup
-import ReaderModel.DataCorrection.CorrectionMethods as CorrectionMethods
+import CypherReader.ReaderModel.DataCorrection.CorrectionMethods as \
+    CorrectionMethods
 
 class ModelOpt(object):
     def __init__(self,IndexAfterMinOnly=False):
@@ -92,12 +93,17 @@ class Model(object):
         """
         # see if we have to make a transition
         # XXX add in current state to dictionry
+        print("param")
+        print(CurrentParamNum)
         if CurrentParamNum in self.StateDict:
             # then make the transition!
             mObj = self.StateDict[CurrentParamNum]
             # call the function
             mObj.func()
             # set the state
+            print("made....")
+            print(self.currentState)
+            print(mObj.stateToSet)
             self.currentState = mObj.stateToSet
             self.CurrentX,self.CurrentY = self.getDataToPlot(self.CurrentWave())
             # plot everything again...
@@ -301,13 +307,14 @@ class Model(object):
         wrapIdx = self.CurrentParamNum % nParams
         if (self.CurrentParamNum >= nParams):
             # then all the parameter are here. 'Wraparound'
-            self.CurrentParams[wrapIdx]
+            self.CurrentParams[wrapIdx] = newDat
         else:
             # can simply add
             self.CurrentParams.append(newDat)
-        self.CurrentParamNum += 1
+        print(self.CurrentParamNum)
         # let the specific model know what parameters we just used.
         self.ParameterMade(wrapIdx, self.CurrentParamNum % nParams)
+        self.CurrentParamNum += 1
         if (self.AutoUpdate and self.CurrentParamNum >= nParams):
             self.PushToDatabase()
         return wrapIdx
@@ -322,6 +329,7 @@ class Model(object):
         Returns:
             None
         """
+        print("add..")
         AssertIntegral(index)
         # POST: index is integral
         # XXX TODO: check in bounds? 

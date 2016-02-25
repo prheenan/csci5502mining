@@ -16,8 +16,8 @@ import GenUtilities  as pGenUtil
 import PlotUtilities as pPlotUtil
 import CheckpointUtilities as pCheckUtil
 from collections import OrderedDict
-import ReaderModel.SqlDataModel.SqlDataModel as SqlDataModel
-from UnitTests.TestingUtil.UnitTestUtil import AssertIntegral
+import CypherReader.ReaderModel.SqlDataModel.SqlDataModel as SqlDataModel
+from CypherReader.UnitTests.TestingUtil.UnitTestUtil import AssertIntegral
 
 class ParameterData:
     def __init__(self,index,x,y):

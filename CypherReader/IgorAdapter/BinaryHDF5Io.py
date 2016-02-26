@@ -6,7 +6,6 @@ import numpy as np
 import PyUtil.HDF5Util as HDF5Util
 from CypherReader.ReaderModel.Generic.WaveDataGroup import WaveDataGroup
 import ProcessSingleWave
-import PxpLoader
 from multiprocessing import Pool
 import os
 

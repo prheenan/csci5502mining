@@ -12,9 +12,8 @@ path= home +"/utilities/python"
 import sys
 sys.path.append(path)
 # import the patrick-specific utilities
-import GenUtilities  as pGenUtil
-import PlotUtilities as pPlotUtil
-import CheckpointUtilities as pCheckUtil
+import CypherReader.Util.GenUtilities  as pGenUtil
+import CypherReader.Util.PlotUtilities as pPlotUtil
 
 # How to get the Asylum notes values
 ## Constants related to approach and positioning

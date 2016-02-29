@@ -11,6 +11,28 @@ sys.path.append("./")
 
 from HighBandwidthUtil import GetLabelledObject
 
+from backprop_net import NeuralNetwork
+
+def networkAnalysis:
+    
+    outPath     = "./XNUG2TestData_3512133158_Image1334Concat.hdf"
+    data        = GetLabelledObject(outPath)
+    rawDataObj  = data.RawData
+    lowRes      = rawDataObj.LowResData
+    hiRes       = rawDataObj.HiResData
+    EventLabels = data.Labels
+    # decimate the high resolution data so it isnt impossible to plot
+    # itll go from about 13 million points to 100K or so
+    deciStep = 130
+    hiForce  = hiRes.force[::deciStep]
+    lowForce = lowRes.force
+   
+    print EventLabels
+    print hiForce
+    #print hiForce
+
+    # build network with the data
+    net = NeuralNetwork(hiForce) 
 
 def run():
     """
@@ -71,4 +93,5 @@ def PlotEvents(x,LabelIdx):
 
     
 if __name__ == "__main__":
-    run()
+    net = Network()
+    #run()

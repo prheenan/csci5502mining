@@ -13,6 +13,7 @@ class NeuralNetwork():
 	# testing matrices
 	input_testing_matrix   = list()
 	output_testing_matrix  = list()
+	confusion_matrix       = list() # need to implement this
 
     	def __init__(self, data):
         	

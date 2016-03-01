@@ -10,10 +10,10 @@ sys.path.append("../")
 sys.path.append("./")
 
 from HighBandwidthUtil import GetLabelledObject
+from backprop_net      import NeuralNetwork
+from gradient          import Gradient
 
-from backprop_net import NeuralNetwork
-
-def networkAnalysis:
+def genFeatures():
     
     outPath     = "./XNUG2TestData_3512133158_Image1334Concat.hdf"
     data        = GetLabelledObject(outPath)
@@ -27,12 +27,11 @@ def networkAnalysis:
     hiForce  = hiRes.force[::deciStep]
     lowForce = lowRes.force
    
-    print EventLabels
-    print hiForce
-    #print hiForce
-
-    # build network with the data
-    net = NeuralNetwork(hiForce) 
+    # construct a function which computes the derivative of hiRes.force with respect to hiRes.time
+    gradient = Gradient(hiRes.force)
+    
+    # apply the gradient function to all data points in hiRes.time and print the computed derivatives 
+    print list(map(gradient.function, hiRes.time))
 
 def run():
     """
@@ -93,5 +92,6 @@ def PlotEvents(x,LabelIdx):
 
     
 if __name__ == "__main__":
-    net = Network()
-    #run()
+    #genFeatures()
+    #net = Network()
+    run()

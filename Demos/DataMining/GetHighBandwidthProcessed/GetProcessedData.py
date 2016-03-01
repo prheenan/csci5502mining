@@ -37,7 +37,7 @@ def run():
     # if you make this true, forces it to run
     forceRun = False
     processedObj = pCheckUtil.getCheckpoint(whereToSave,GetPreProcessExample,
-                                            True)
+                                            forceRun)
     # loop through and plot just the regions around the events
     fig = plt.figure()
     # get every window

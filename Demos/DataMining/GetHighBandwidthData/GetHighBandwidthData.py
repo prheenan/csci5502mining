@@ -10,7 +10,29 @@ sys.path.append("../")
 sys.path.append("./")
 
 from DataMiningDemoUtil.HighBandwidthUtil import GetLabelledExample
+from HighBandwidthUtil import GetLabelledObject
+from backprop_net      import NeuralNetwork
+from gradient          import Gradient
 
+def genFeatures():
+    
+    outPath     = "./XNUG2TestData_3512133158_Image1334Concat.hdf"
+    data        = GetLabelledObject(outPath)
+    rawDataObj  = data.RawData
+    lowRes      = rawDataObj.LowResData
+    hiRes       = rawDataObj.HiResData
+    EventLabels = data.Labels
+    # decimate the high resolution data so it isnt impossible to plot
+    # itll go from about 13 million points to 100K or so
+    deciStep = 130
+    hiForce  = hiRes.force[::deciStep]
+    lowForce = lowRes.force
+   
+    # construct a function which computes the derivative of hiRes.force with respect to hiRes.time
+    gradient = Gradient(hiRes.force)
+    
+    # apply the gradient function to all data points in hiRes.time and print the computed derivatives 
+    print list(map(gradient.function, hiRes.time))
 
 def run():
     """
@@ -70,4 +92,6 @@ def PlotEvents(x,LabelIdx):
 
     
 if __name__ == "__main__":
+    #genFeatures()
+    #net = Network()
     run()

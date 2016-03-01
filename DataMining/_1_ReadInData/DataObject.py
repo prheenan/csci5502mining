@@ -3,12 +3,22 @@ from __future__ import division
 # This file is used for importing the common utilities classes.
 import numpy as np
 
+def SetDataObjectProcessedByLabels(DataObject,pointsAround):
+    """
+    Turns a data object into a processed data object using the labels.
+    Debugging only, Pre-processing should *not* actualy use the labels to
+    filter the data
+    
+    Args:
+        DataObject: Object to set by labels
+        PointsAround: points around each event to set by
+    """
+    
 class DataObject:
     """
     This is the class which we will use to pass around data
     """
-    def __init__(self,RawTimeSepForce=None,Labels=None,
-                 ProcessedDataObject=None):
+    def __init__(self,TimeSepForce=None,Labels=None,PreProcessed=False):
         """
         Constructor. Allows for constructing either a Raw or processed data 
         object
@@ -16,31 +26,26 @@ class DataObject:
             Args:
                 RawTimeSepForce : The Raw TimeSepForce Object, an instance like
                 /CypherReader/ReaderModel/Generic/TimeSepForceObj
-             
-                ProcessedDataObject : A processed version of the data, for 
-                speeding things up. Instance like <XXX TBD>
         
                 Labels: A LabelObject, For determining where events happen
+        
+                PreProcessed: is pre-processed
         """
-        assert RawTimeSepForce is not None or ProcessedDataObject is not None
+        assert TimeSepForce is not None
         # POST: at least some raw data or processed data
-        self.RawData = RawTimeSepForce
+        self.Data = TimeSepForce
         self.Labels = Labels
-        self.ProcessedData = ProcessedDataObject
+        self.PreProcessed = PreProcessed
     def HasLabels(self):
         return self.Labels is not None
-    def HasRaw(self):
-        return self.RawData is not None
-    def HasProcessed(self):
-        return self.ProcessedData is not None
     @property
     def MetaData(self):
         """
         Returns (a reference to) the *low resolution* meta data. Note that this
         is usually the same as the high-resolution
         """
-        assert self.HasRaw()
-        return self.RawData.LowResData.meta
+        return self.Data.LowResData.meta
+    @property
     def Labels(self):
         """
         Returns (a reference to) the Labelling object, as long as it exists
@@ -53,17 +58,7 @@ class DataObject:
         Returns (a reference to) the raw data. Throws an error if there isnt 
         any (ie: if only processed)
         """
-        assert self.HasRaw()
-        return self.RawData
-    @property
-    def Processed(self):
-        """
-        Returns (a reference to) the processed data. Throws an error if there 
-        isnt any (ie: if only raw)
-        """
-        assert self.HasProcessed()
-        return self.ProcessedData
-
+        return self.Data
     
 if __name__ == "__main__":
     run()

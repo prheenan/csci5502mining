@@ -12,6 +12,11 @@ EventLabels = [ [9606314,9606338],[9714802,9714831],[9881233,9881346],
                 [10100413,10100757],[10354853,10355079] ]
 
 
+def GetLabelledExample():
+    outPath = "../../../DataMining/DataCache/1_RawData/" +\
+              "XNUG2TestData_3512133158_Image1334Concat.hdf"
+    data = GetLabelledObject(outPath)
+    return data
 
 def GetHighResData(filePath):
     """
@@ -35,4 +40,4 @@ def GetLabelledObject(fileOut):
     """
     mObj = GetHighResData(fileOut)
     # now make a Data Object ...
-    return DataObject(RawTimeSepForce=mObj,Labels=EventLabels)
+    return DataObject(TimeSepForce=mObj,Labels=EventLabels)

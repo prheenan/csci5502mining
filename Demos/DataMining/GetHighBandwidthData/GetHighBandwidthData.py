@@ -9,7 +9,7 @@ sys.path.append("../../")
 sys.path.append("../")
 sys.path.append("./")
 
-from HighBandwidthUtil import GetLabelledObject
+from DataMiningDemoUtil.HighBandwidthUtil import GetLabelledExample
 
 
 def run():
@@ -21,11 +21,10 @@ def run():
 
     DataMining/_1_ReadInDta/DataObject for more information on this
     """
-    outPath = "./XNUG2TestData_3512133158_Image1334Concat.hdf"
-    data = GetLabelledObject(outPath)
+    data = GetLabelledExample()
     # print off the meta data (holy spam!)
     print(data.MetaData.__dict__)
-    rawDataObj = data.RawData
+    rawDataObj = data.Data
     lowRes = rawDataObj.LowResData
     hiRes = rawDataObj.HiResData
     # get the labels (locations of start and end for events)

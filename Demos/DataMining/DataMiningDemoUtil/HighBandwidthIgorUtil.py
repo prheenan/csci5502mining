@@ -1,7 +1,6 @@
 from CypherReader.UnitTests.TestDataCorrections.ModelCorrections.\
     Main_ModelCorrections import GetOriginalAndCorrected,LoadHiResData
-
-
+    
 def SaveOutHighResData(filePath,\
         fileIn="../../../CypherReader/UnitTests/LocalData/NUG2TestData.pxp"):
     """

@@ -64,8 +64,6 @@ def GroupWavesByEnding(WaveObjList,recquiredEndings=None):
             digitEndingList.append(ProcessSingleWave.IgorNameRegex(n))
         except ValueError:
             # not a good wave
-            print("bad")
-            print(n)
             continue
     # first element gives the (assumed unique) ids
     preamble = [ele[0] for ele in digitEndingList]

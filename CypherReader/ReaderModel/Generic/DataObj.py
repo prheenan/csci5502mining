@@ -1,13 +1,4 @@
 
-class Bunch:
-    """
-    see 
-http://stackoverflow.com/questions/2597278/python-load-variables-in-a-dict-into-namespace
-
-    Used to keep track of the meta information
-    """
-    def __init__(self, adict):
-        self.__dict__.update(adict)
     
 
 class DataObj:

@@ -87,13 +87,7 @@ class PlotHandler:
         """
         Called with the bottom y changes
         """
-        print("y")
         yminPlot,ymaxPlot = viewBot.childrenBounds()[1]
-
-        print("x")
-        print(viewBot.childrenBounds()[0])
-        print("new")
-        print(yRange)
         # get the y range accotding to this region...
         changedMin = yRange[0]
         changedMax = yRange[1]

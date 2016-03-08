@@ -62,7 +62,8 @@ def SaveObjectAsHDF5(FolderPath,WaveObject):
     FilePath = FolderPath + GetFileSaveName(WaveObject)
     HDF5Util.WriteHDF5Array(FilePath,WaveData,attr=WaveObject.Note)
 
-def SaveWaveGroupAsTimeSepForceHDF5(FolderPath,WaveGroup):
+def SaveWaveGroupAsTimeSepForceHDF5(FolderPath,WaveGroup,
+                                    ErrorIfNoHighBWX=True):
     """
     Non-parallel, saves a single wave object to folderpath as an hdf5 file.
     Save it as <time,sep,force> with aa low and high bandwidth version 
@@ -73,6 +74,11 @@ def SaveWaveGroupAsTimeSepForceHDF5(FolderPath,WaveGroup):
     Args:
         WaveGroup: The Model.WaveDataGroup to save out. 
         FolderPath: Where to save the hdf5 file (full *folder* path)
+
+        ErrorIfNoHighBWX: If true, and if the wavedata has high bandwidth 
+        data, throws an error if we cant make time,sep,force. Otherwise,
+        *only* makes force (useful, e.g., for caching, when we dont have
+        high resolution x)
     Returns:
         FilePath: Where the file was saved
     Raises:
@@ -88,7 +94,15 @@ def SaveWaveGroupAsTimeSepForceHDF5(FolderPath,WaveGroup):
     FilePath = FolderPath + GetFileSaveName(concatWave)
     # do we have a high bandwidth wave?
     if (WaveGroup.HasHighBandwidth()):
-        concatWaveHighBW = WaveGroup.HighBandwidthCreateTimeSepForceWaveObject()
+        try:
+            concatWaveHighBW = \
+                WaveGroup.HighBandwidthCreateTimeSepForceWaveObject()
+        except KeyError as e:
+            if (ErrorIfNoHighBWX):
+                raise(e)
+            else:
+                # just get the force
+                concatWaveHighBW = WaveGroup.HighBandwidthGetForceWaveObject()
         dataSets[DEFAULT_HIGH_BANDWIDTH] = concatWaveHighBW.DataY
         attrs[DEFAULT_HIGH_BANDWIDTH] = concatWaveHighBW.Note
     # POST: datasets has all the datasets we want to save.
@@ -96,7 +110,7 @@ def SaveWaveGroupAsTimeSepForceHDF5(FolderPath,WaveGroup):
     HDF5Util.WriteHDF5Array(FilePath,array=dataSets,attr=attrs)
     return FilePath
 
-def GetAssocDataFromDataset(ReaderAllReturn,datasetname):
+def GetAssocDataFromDataset(ReaderAllReturn,datasetname,ErrorOnNoSep=True):
     """
     Given return from HDF5Util.ReadHdf5AllDatasets and a dataset name, returns
     the sep and force as a grouped object. 
@@ -106,6 +120,7 @@ def GetAssocDataFromDataset(ReaderAllReturn,datasetname):
     Args:
         ReaderAllReturn : output from HDF5Util.ReadHdf5AllDatasets
         datasetname: name of the dataset. should be in ReaderAllReturn.keys()
+        ErrorOnNoSep: If true, returns an error if we cant find a sep
     Returns:
         a dictionary of <ending>:<WaveObj>
     Raises:
@@ -119,20 +134,35 @@ def GetAssocDataFromDataset(ReaderAllReturn,datasetname):
     forceExt = "force"
     makeObj = lambda data,note :  ProcessSingleWave.WaveObj(DataY=data,
                                                             Note=note)
-    AssocData = {
-        sepExt:makeObj(defaultData[:,HDF5Util.COLUMN_SEP],defaultNote),
-        forceExt:makeObj(defaultData[:,HDF5Util.COLUMN_FORCE],defaultNote)
-    }
+    # try to get the force and separation
+    try:
+        AssocData = {
+            sepExt:makeObj(defaultData[:,HDF5Util.COLUMN_SEP],defaultNote),
+            forceExt:makeObj(defaultData[:,HDF5Util.COLUMN_FORCE],defaultNote)
+        }
+    except IndexError as e:
+        if (ErrorOnNoSep):
+            # throw an error if we were asked to
+            raise e
+        else:
+            # assume *only* column is first
+            assert len(defaultData.shape) is 1
+            AssocData = {
+                forceExt:makeObj(defaultData[:],
+                                 defaultNote)
+            }
     return AssocData
     
-def ReadWaveIntoWaveGroup(FilePath):
+def ReadWaveIntoWaveGroup(FilePath,ErrorOnNoSep=True):
     """
-    Non-parallel, Reads a given File into an associated wave group
+    Non-parallel, Reads a given File into an associated wave group (sep/force)
 
     Unit tested by "UnitTests/PythonReader/CypherConverter"
 
     Args:
         FilePath: The path to the file
+        ErrorOnNoSep : If True, throws an error if we cant find a separation
+        (for the *high res* only)
     Returns:
         a Model.WaveDataGroup object 
     Raises:
@@ -149,7 +179,8 @@ def ReadWaveIntoWaveGroup(FilePath):
     if (DEFAULT_HIGH_BANDWIDTH in keys):
         # get the high resolution associated data...
         HighResData = GetAssocDataFromDataset(mDataSets,
-                                              DEFAULT_HIGH_BANDWIDTH)
+                                              DEFAULT_HIGH_BANDWIDTH,\
+                                              ErrorOnNoSep)
         ToRet.HighBandwidthSetAssociatedWaves(HighResData)
     return ToRet
 

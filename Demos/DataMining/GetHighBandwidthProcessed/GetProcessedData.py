@@ -13,6 +13,7 @@ sys.path.append("./")
 from DataMiningDemoUtil.HighBandwidthUtil import GetLabelledExample
 from DataMining._2_PreProcess.ProcessingMethods import ProcessByLabels
 from DataMining._2_PreProcess.PreProcessedObject import ProcessedObj
+from DataMining.DataMiningUtil.Filtering import FilterObj as FilterObj
 from CypherReader.Util import CheckpointUtilities as pCheckUtil
 
 def GetPreProcessExample():
@@ -37,7 +38,7 @@ def run():
     # if you make this true, forces it to run
     forceRun = False
     processedObj = pCheckUtil.getCheckpoint(whereToSave,GetPreProcessExample,
-                                            forceRun)
+                                            True)
     # loop through and plot just the regions around the events
     fig = plt.figure()
     # get every window
@@ -47,9 +48,15 @@ def run():
     fig = plt.figure()
     nWindows = len(sepWindow)
     # loop through *each* window and plokt
+    timeConst = 4e-5
+    mFiltering = FilterObj.Filter(timeConst = timeConst)
     for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,forceWindow)):
         plt.subplot(nWindows,1,i+1)
         plt.plot(time,force,'b.',ms=2,label="Window {:d}".format(i))
+        # plot the filtered version too!
+        plt.plot(time,mFiltering.FilterDataY(time,force),color='r',
+                 label="Filtered Data")
+    plt.legend()
     plt.show()
 if __name__ == "__main__":
     run()

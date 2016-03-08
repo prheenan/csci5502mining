@@ -329,7 +329,8 @@ def PushSourceIfNeeded(ToSave,force=False):
         DatabasePath = IgorUtil.getDatabaseFolder()
         # XXX TODO: check that path exists to file?
         print("XXX File saving disabled while off campus")
-        #BinaryHDF5Io.SaveObjectAsHDF5(FolderPath=DatabasePath,WaveObject=ToSave)
+        #BinaryHDF5Io.SaveObjectAsHDF5(FolderPath=DatabasePath,
+        #                              WaveObject=ToSave)
 
 def AddTrace(TraceObj,SqlObj):
     """

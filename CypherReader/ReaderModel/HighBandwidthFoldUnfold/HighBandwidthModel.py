@@ -180,37 +180,44 @@ class HighBandwidthModel(Model):
         # demand that we have lower and higher waves
         # XXX make this a parameter we put in
         lowerWaves = ["deflv","zsnsr"]
-        higherWaves = ["deflv"]
+        # higher waves have an option: defl or deflv
+        higherWaves = [ ["defl","deflv"]]
         # check for lower and upper waves
         for waveEndLow in lowerWaves:
             if waveEndLow not in assocWavesB:
                 return False
         for waveEndHigh in higherWaves:
-            if (waveEndHigh not in assocWavesA):
+            # check each option
+            for opt in waveEndHigh:
+                found = False
+                if (opt in assocWavesA):
+                    found = True
+                    break
+            # POST: should have found at least one option.
+            if not found:
                 return False
         # POST: (2) all endings are here.
         return True
     
-    def AddNewWaves(self,waves,SourceFilePath):
+    def CustomGetWaves(self,waves,SourceFilePath):
         """
         Overriding Function to add new waves, from a loaded file. Recquires 
         both low and high bandwidth data to be present
         
         Args:
-             waves : output from PxpLoader.LoadPxp
+             waves : output from PxpLoader.LoadPxp. assumed non-duplicate
              SourceFilePath : where the data is coming from
         Returns:
             None
         """
-        # XXX TODO: add in caching
-        # get the list of (new) unique names
-        uniqueNames = sorted(list(set(waves.keys()) - set(self.Waves.keys())))
+        uniqueNames = sorted(waves.keys())
         # to load the data, subsequent, unique ids should have the proper waves
         # first, look for waves with high-bandwidth data
         # to do this, we simple get the maximum size of each data for all vals
         getMaxLength = lambda listV: max([listV[ele].DataY.size
                                           for ele in listV.keys()])
         maxLengths = map(getMaxLength,waves.values())
+        newWaves = dict()
         # look through the candidate indices (ie: where we exceed the threshold)
         for i,lenV in enumerate(maxLengths):
             # check if we have enouhg points, and we have at least one more wave
@@ -225,6 +232,6 @@ class HighBandwidthModel(Model):
                 hiRes = waves[uniqueNames[i-1]]
                 tmp = WaveDataGroup(lowRes)
                 tmp.HighBandwidthSetAssociatedWaves(hiRes)
-                self.Waves[name] = tmp
-                self.View.waveList.addItem(name)
+                newWaves[name] = tmp
         # POST: all waves set up...
+        return newWaves

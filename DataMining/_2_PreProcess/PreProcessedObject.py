@@ -48,8 +48,9 @@ class ProcessedObj:
     @property
     def HiResData(self):
         return self.ProcessedData.Data.HiResData
+    @property
     def LowResData(self):
-        return self.ProcessedData.Data.LoResData
+        return self.ProcessedData.Data.LowResData
     @property
     def MetaData(self):
         return self.ProcessedData.MetaData()

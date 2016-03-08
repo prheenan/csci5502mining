@@ -60,6 +60,8 @@ def ConvertToTableObj(mCls,Note,MetaIds):
             # then this is a timestamp; convert from Cypher format
             vToAdd = ConvertTimeStamp(vToAdd)
         # POST: vToAdd is A-OK
+        if (type(vToAdd) == np.float64):
+            vToAdd = float(vToAdd)
         vals[c] = vToAdd
     # POST: all columns added
     return vals

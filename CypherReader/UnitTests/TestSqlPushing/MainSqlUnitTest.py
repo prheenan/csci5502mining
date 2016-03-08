@@ -8,7 +8,7 @@ sys.path.append("../")
 sys.path.append("../../")
 sys.path.append("../../../")
 
-import IgorUtil
+import Util.IgorUtil
 from ReaderModel.SqlDataModel import SqlBootstrap
 from ReaderModel.SqlDataModel import SqlDataModel
 from IgorAdapter import BinaryHDF5Io

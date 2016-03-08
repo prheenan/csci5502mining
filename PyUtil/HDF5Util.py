@@ -125,7 +125,9 @@ def WriteHDF5Array(filePath,array,attr=None,dataset=DEFAULT_IGOR_DATASET,
 
 def WriteDataSet(f,datasetName,array,compression,compression_opts,attr=None):
     """
-    Given an array, list of attributes, and dataset, writes the array as a datase    to the already-opened HDF5 file. Doesn't do *any* maintenance on the file 
+    Given an array, list of attributes, and dataset, writes the array as a 
+    datase to the already-opened HDF5 file. Doesn't do *any* maintenance on
+    the file 
 
     Args:
         f: the already open HDF5 file to write into

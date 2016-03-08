@@ -3,17 +3,6 @@ from __future__ import division
 # This file is used for importing the common utilities classes.
 import numpy as np
 
-def SetDataObjectProcessedByLabels(DataObject,pointsAround):
-    """
-    Turns a data object into a processed data object using the labels.
-    Debugging only, Pre-processing should *not* actualy use the labels to
-    filter the data
-    
-    Args:
-        DataObject: Object to set by labels
-        PointsAround: points around each event to set by
-    """
-    
 class DataObject:
     """
     This is the class which we will use to pass around data

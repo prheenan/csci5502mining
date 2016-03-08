@@ -58,7 +58,15 @@ def GroupWavesByEnding(WaveObjList,recquiredEndings=None):
     names = [o.Name() for o in WaveObjList]
     # assumed waves end with a number, followed by an ending
     # we need to figure out what the endings and numbers are
-    digitEndingList = map(ProcessSingleWave.IgorNameRegex,names)
+    digitEndingList = []
+    for n in names:
+        try:
+            digitEndingList.append(ProcessSingleWave.IgorNameRegex(n))
+        except ValueError:
+            # not a good wave
+            print("bad")
+            print(n)
+            continue
     # first element gives the (assumed unique) ids
     preamble = [ele[0] for ele in digitEndingList]
     ids = [ele[1] for ele in digitEndingList]
@@ -67,6 +75,7 @@ def GroupWavesByEnding(WaveObjList,recquiredEndings=None):
 #stackoverflow.com/questions/5419204/index-of-duplicates-items-in-a-python-list
     counter=collections.Counter(ids) 
     idSet=[i for i in counter]
+    # each key of 'result' will give a list of indies associated with that ID
     result={}
     for item in idSet:
         result[item]=[i for i,j in enumerate(ids) if j==item]
@@ -93,6 +102,7 @@ def GroupWavesByEnding(WaveObjList,recquiredEndings=None):
         for idx in val:
             tmp[endings[idx].lower()] = WaveObjList[idx]
         finalList[preamble[idx] + key] = tmp
+    print(finalList)
     return finalList
     
 def LoadPxp(inFile):

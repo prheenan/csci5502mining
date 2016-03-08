@@ -31,12 +31,12 @@ def GuiLoaded(EventWindow):
     FileToLoad = "./LocalData/NUG2TestData.pxp"
     EventWindow.LoadPxpAndAddToModel(FileToLoad)
     # POST: wavs loaded, select the 'first' one (keys unordered)
-    waveDict = EventWindow.Model.Waves
-    Wave = waveDict.keys()[0]
+    Model = EventWindow.Model
+    Wave = Model.Waves.keys()[0]
     # select this wave...
     EventWindow.Model.SelectWaveByKey(Wave)
     # Add a bunch of parameters at dummy indices, based on the data
-    waveDataGroup = waveDict[Wave]
+    waveDataGroup = Model.CurrentWave()
     associatedWaves = waveDataGroup.values()
     # get the actual y data for a wave
     mWave = associatedWaves[0]

@@ -6,6 +6,12 @@ import matplotlib.pyplot as plt
 import sys
 import PyUtil.IgorUtil as IgorUtil
 
+class TouchOffObj:
+    def __init__(self,apprTime,apprIdx,retrTime,retrIdx):
+        self.apprTime = apprTime
+        self.apprIdx = apprIdx
+        self.retrTime = retrTime
+        self.retrIdx = retrIdx
 
 class Filter:
     def __init__(self,timeConst,degree=2):
@@ -28,8 +34,22 @@ class Filter:
         deltaTForY = timeY[1] - timeY[0]
         n = int(np.ceil(self.timeFilter/deltaTForY))
         return IgorUtil.savitskyFilter(DataY,nSmooth=n,degree=2)
-    def GetApproachAndRetractTouchoffTimes():
+    def GetApproachAndRetractTouchoffTimes(TimeSepForceObj):
         """
-        
+        Given a TimeSepForceObj object (ie: low or high res), 
+        gets the (approximate) approach and retract touchoff times, 
+
+        Args:
+            DataObj:TimeSepForceObj instance, with time separation and force
+        Returns: 
+            TouchOffObj instance
         """
-        
+        # filter the zsnsr data to what we are about
+
+        # using the meta data, get the approximate 'halfway' mark
+
+        # split the data, filter, find where the derivative is median, then
+        # first crosses the median - this is either the start or the end of the
+        # touchoff 
+
+        pass

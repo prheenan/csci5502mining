@@ -17,6 +17,9 @@ from CypherReader.UnitTests.TestingUtil.UnitTestUtil import AssertIntegral
 from WaveDataGroup import WaveDataGroup
 import CypherReader.ReaderModel.DataCorrection.CorrectionMethods as \
     CorrectionMethods
+import CypherReader.ReaderModel.LargeDataManagement.LargeDataManager as \
+    LargeDataManager
+
 
 class ModelOpt(object):
     def __init__(self,IndexAfterMinOnly=False):
@@ -36,7 +39,7 @@ class Model(object):
              Instantiated Model object (must inherit; this class is abstract)
         """
         self.View = None
-        self.Waves = {}
+        self.Waves = LargeDataManager.LargeDataManager()
         # get the meta parameters and the (possible trivial) meta dictionary
         self.ParamMeta,self.StateDict = self.GetParameterMetaInfo()
         self.CurrentParams = []
@@ -46,6 +49,8 @@ class Model(object):
         # XXX TODO add in option to not always auto-update. Safer this way
         self.AutoUpdate = True
         self.ModelOpt = ModelOpt()
+        # start off with no group selected
+        self.CurrentAssociatedWaveGroup = None
     @abc.abstractmethod
     def GetParameterMetaInfo(self):
         """
@@ -133,22 +138,39 @@ class Model(object):
         self.View = View
     def AddNewWaves(self,waves,SourceFile):
         """
-        Function to add new waves, from a loaded file
+        Add non-duplicates present in 'Waves' to the wave list.
+        Args:
+            Waves: two-level dict of <WaveId:<Dict of associated waves>>. Only
+            add waves with non-duplicate IDs
+
+            SourceFile: Where the data is coming from (full Path)
+        """
+        # only add non-duplicates
+        keys = waves.keys()
+        uniqueWaves = dict([(key,wave)
+                            for key,wave in waves.items()\
+                            if key not in self.Waves])
+        # get the waves we want to add from the list
+        wavesToAdd = self.CustomGetWaves(uniqueWaves,SourceFile)
+        addMethod = lambda name: self.View.waveList.addItem(name)
+        # add to the cache
+        self.Waves.AddData(wavesToAdd,addMethod)
+    def CustomGetWaves(waves,SourceFile):
+        """
+        Function which gets new waves, from a loaded file. Should *not*
+        Alter self.Waves...
         
         Args:
              waves : output from PxpLoader.LoadPxp
              SourceFile : Full path where the wave originated from
         Returns:
-            None
+            Waves which should be added to the cache
         """
-        # XXX TODO: add in caching
+        Waves = dict()
         for name,associatedWaves in waves.items():
-            if (name in self.Waves):
-                # then it is a duplicate; don't add
-                continue
             # add in the new wave
-            self.Waves[name] = WaveDataGroup(associatedWaves,SourceFile)
-            self.View.waveList.addItem(name)
+            Waves[name] = WaveDataGroup(associatedWaves,SourceFile)
+        return Waves
     def CurrentWave(self):
         """
         Returns the current WaveObject we have right now. raises an error if
@@ -164,7 +186,7 @@ class Model(object):
             raise KeyError("Couldn't find {:s} in Waves".\
                            format(self.CurrentWaveName))
         # POST: the wave exists
-        return self.Waves[self.CurrentWaveName]
+        return self.CurrentAssociatedWaveGroup
     def SetCurrentWaveByKey(self,waveName):
         """
         See SelectWaveByKey. This does *not* update the view
@@ -177,14 +199,19 @@ class Model(object):
         # if we aren't actually changing the wave, dont do anything.
         if (waveName.lower() == self.CurrentWaveName.lower()):
             return
+        if (self.CurrentAssociatedWaveGroup is not None):
+            # update the old data (maybe cached), switching to new
+            self.Waves.UpdateData(self.CurrentWaveName,
+                                  self.CurrentAssociatedWaveGroup)
         # POST: new wave, something to do.
         # reset all the parameters, set the wave
         self.CurrentWaveName = waveName
         self.CurrentParams = []
         self.CurrentParamNum = 0
         self.ResetForNewWave()
-        mAssocWaves = self.CurrentWave()
-        self.CurrentX,self.CurrentY = self.getDataToPlot(mAssocWaves)
+        self.CurrentAssociatedWaveGroup = self.Waves[self.CurrentWaveName]
+        self.CurrentX,self.CurrentY = \
+                self.getDataToPlot(self.CurrentAssociatedWaveGroup)
     def SelectWaveByKey(self,waveName):
         """
         Select the wave with the given key from the dictionary. If the wave is
@@ -346,7 +373,7 @@ def GetCorrectedHiResSepForce(waveDataGroup,idxLowResTouch,idxHiResTouch):
     returns the corrected Hi resolultion separation and force as single arrays
 
     Args:
-        waveDataGroup :  the WaveDataGroup object to use. Should have low and high 
+        waveDataGroup :  the WaveDataGroup object to use. Should have low+ high 
         res data. 
 
         idxLowResTouch : a 2-dimensional index array into the *low res* data, 
@@ -363,13 +390,15 @@ def GetCorrectedHiResSepForce(waveDataGroup,idxLowResTouch,idxHiResTouch):
     assert len(idxLowResTouch) == 2
     assert waveDataGroup.HasHighBandwidth()
     sliceLowResCorrect,sliceHiResCorrect = \
-            CorrectionMethods.GetCorrectionSlices(idxLowResTouch[0],idxHiResTouch[1])
+    CorrectionMethods.GetCorrectionSlices(idxLowResTouch[0],idxHiResTouch[1])
     # use the elementwise average differences to get the time offset
     deltaLow = waveDataGroup.AssociatedWaves.values()[0].DeltaX()
     deltaHi = waveDataGroup.HighBandwidthWaves.values()[0].DeltaX()
-    timeOffset = CorrectionMethods.GetTimeOffset(deltaLow,idxLowResTouch,deltaHi,idxHiResTouch)
+    timeOffset = CorrectionMethods.GetTimeOffset(deltaLow,idxLowResTouch,
+                                                 deltaHi,idxHiResTouch)
     # ... should make sure the deltas arent the same
-    assert not np.allclose(deltaLow,deltaHi) , "High resolution shouldn't have the same delta" 
+    assert not np.allclose(deltaLow,deltaHi) , \
+        "High resolution shouldn't have the same delta" 
     return CorrectionMethods.GetCorrectedAndOffsetHighRes(waveDataGroup,
                                                           sliceLowResCorrect,
                                                           sliceHiResCorrect,

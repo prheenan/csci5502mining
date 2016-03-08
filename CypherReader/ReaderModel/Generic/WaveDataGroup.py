@@ -1,5 +1,6 @@
 from CypherReader.IgorAdapter import ProcessSingleWave as ProcessSingleWave
 import PyUtil.CypherUtil as CypherUtil
+import numpy as np
 
 # Class for storing associated waves from a known data file
 class WaveDataGroup():
@@ -119,12 +120,24 @@ class WaveDataGroup():
         Args: 
              None
         Returns:
-             WaveObj corresponding to the index
+             force *array* ( for WaveObj see HighBandwidthGetForceWaveObject)
         """
         self.AssertHighBW()
         # get the force for the wave
         force = CypherUtil.GetForce(self.HighBandwidthWaves)
         return force
+    def HighBandwidthGetForceWaveObject(self):
+        """
+        See HighBandwidthGetForce, except this returns a wave object
+        (insteaf of just an array)
+        Args:
+            None
+        Returns:
+             force *WaveObj* ( for array see HighBandwidthGetForce)
+        """
+        ForceNote = self.DataNote(self.HighBandwidthWaves)
+        ForceData = self.HighBandwidthGetForce()
+        return ProcessSingleWave.WaveObj(DataY=ForceData,Note=ForceNote)
     def HighBandwidthCreateTimeSepForceWaveObject(self):
         """
         Returns the high-bandwidth force and separation objects, assuming
@@ -164,3 +177,25 @@ class WaveDataGroup():
              WaveObj corresponding to the index
         """
         self.HighBandwidthWaves = AssocWaves
+    def EqualityTimeSepForce(self,other):
+        """
+        Tests if this wave group is equal to another, according to if the
+        time,sep,force are the same (ie: 'data' equivalence).
+
+        Only checks the force for the high bandwidth
+
+        Unit tested by TestLargerDataManager/
+        """
+        # if make sure high/low bandwidth flags match
+        if ((self.HasHighBandwidth() and not other.HasHighBandwidth()) or
+            (not self.HasHighBandwidth() and other.HasHighBandwidth())):
+            return False
+        # check the low res is OK
+        if (not self.CreateTimeSepForceWaveObject() == \
+            other.CreateTimeSepForceWaveObject()):
+            return False
+        # check the high res is OK, if we have it
+        if (self.HasHighBandwidth() and
+            (not np.allclose(self.HighBandwidthGetForce(),
+                             other.HighBandwidthGetForce()))):
+            return False

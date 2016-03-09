@@ -36,9 +36,9 @@ def run():
     # doesnt exist, it calls the function, then saves out the result as the file
     whereToSave = "../../../DataMining/DataCache/2_ProcessedData/tmp.pkl"
     # if you make this true, forces it to run
-    forceRun = False
+    forceRun = True
     processedObj = pCheckUtil.getCheckpoint(whereToSave,GetPreProcessExample,
-                                            True)
+                                            forceRun)
     # loop through and plot just the regions around the events
     fig = plt.figure()
     # get every window

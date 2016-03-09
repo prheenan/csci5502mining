@@ -48,14 +48,21 @@ def run():
     fig = plt.figure()
     nWindows = len(sepWindow)
     # loop through *each* window and plokt
-    timeConst = 4e-5
+    timeConst = 8e-5
     mFiltering = FilterObj.Filter(timeConst = timeConst)
     for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,forceWindow)):
-        plt.subplot(nWindows,1,i+1)
+        plt.subplot(2,nWindows,i+1)
         plt.plot(time,force,'b.',ms=2,label="Window {:d}".format(i))
         # plot the filtered version too!
-        plt.plot(time,mFiltering.FilterDataY(time,force),color='r',
+        filteredForce=mFiltering.FilterDataY(time,force)
+        filteredGradient = np.gradient(filteredForce)
+        stdV= np.std(filteredGradient)
+        zGrad = (filteredGradient - np.mean(filteredGradient))/stdV
+        plt.plot(time,filteredForce,color='r',
                  label="Filtered Data")
+        plt.subplot(2,nWindows,nWindows+i+1)
+        plt.plot(time,zGrad,color='r',label="Gradient, z scored")
+        
     plt.legend()
     plt.show()
 if __name__ == "__main__":

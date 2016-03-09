@@ -43,8 +43,7 @@ class ProcessedObj:
                                                       highResIdx)
         # Create our internal data object, using the same labels as before
         labs = DataObject.Labels
-        self.ProcessedData = DataObject(TimeSepForce=slicedTimeSepForce,
-                                        Labels=labs)
+        self.ProcessedData = DataObject(TimeSepForce=slicedTimeSepForce)
     @property
     def HiResData(self):
         return self.ProcessedData.Data.HiResData
@@ -56,4 +55,4 @@ class ProcessedObj:
         return self.ProcessedData.MetaData()
     @property
     def Labels(self):
-        return self.PRocessedData.Labels()
+        return self.labs

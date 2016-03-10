@@ -15,6 +15,7 @@ from DataMining._2_PreProcess.ProcessingMethods import ProcessByLabels
 from DataMining._2_PreProcess.PreProcessedObject import ProcessedObj
 from DataMining.DataMiningUtil.Filtering import FilterObj as FilterObj
 from CypherReader.Util import CheckpointUtilities as pCheckUtil
+from CypherReader.Util import PlotUtilities as pPlotUtil
 
 def GetPreProcessExample():
     data = GetLabelledExample()
@@ -45,25 +46,46 @@ def run():
     timeWindow,sepWindow,forceWindow = \
         processedObj.HiResData.GetTimeSepForce()
     # plot the individual windows
-    fig = plt.figure()
+    fig = pPlotUtil.figure(24,18)
     nWindows = len(sepWindow)
     # loop through *each* window and plokt
     timeConst = 8e-5
+    labels = processedObj.Labels
     mFiltering = FilterObj.Filter(timeConst = timeConst)
     for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,forceWindow)):
-        plt.subplot(2,nWindows,i+1)
-        plt.plot(time,force,'b.',ms=2,label="Window {:d}".format(i))
-        # plot the filtered version too!
-        filteredForce=mFiltering.FilterDataY(time,force)
+        # convert force to pN (just for plotting)
+        force *= 1e12
+        # also normalize it so the median before the event is zero (again,
+        # just to make the plot pretty)
+        deltaT = time[1]-time[0]
+        startIdxInWindow = int((labels[i].StartTime-time[0])/(deltaT))
+        force -= np.median(force[:startIdxInWindow])
+        # this would be a great feature -- the derivative of the filtered force,
+        # normalized to a standard normal curve
         filteredGradient = np.gradient(filteredForce)
         stdV= np.std(filteredGradient)
         zGrad = (filteredGradient - np.mean(filteredGradient))/stdV
-        plt.plot(time,filteredForce,color='r',
+        # plot the filtered version too!
+        filteredForce=mFiltering.FilterDataY(time,force)
+        # convert time to ms (just for plotting). Also just offset the time
+        # to zero (again, just to make it easier to look at)
+        toMs = 1e3
+        minT = min(time)
+        time *= toMs
+        time -= min(time)
+        plt.subplot(2,nWindows,i+1)
+        plt.plot(time,force,'b-',ms=2,label="Window {:d}".format(i))
+        pPlotUtil.lazyLabel("Time (ms)","Force (pN)","") 
+        plt.plot(time,filteredForce,color='r',lw=5,
                  label="Filtered Data")
         plt.subplot(2,nWindows,nWindows+i+1)
         plt.plot(time,zGrad,color='r',label="Gradient, z scored")
-        
-    plt.legend()
-    plt.show()
+        # normalize the events to this window
+        norm = lambda x: (x-minT) * toMs
+        plt.axvline(norm(labels[i].StartTime),label="Start of Event")
+        plt.axvline(norm(labels[i].EndTime),label="End of Event")
+        pPlotUtil.lazyLabel("Time (ms)","dForce (pN)","",frameon=True,
+                            legendBgColor='w') 
+    pPlotUtil.savefig(fig,"./ProcessOut.png")
 if __name__ == "__main__":
     run()

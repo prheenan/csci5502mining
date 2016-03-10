@@ -25,7 +25,7 @@ class ProcInfo:
         self.ApproachDistInfo=ApproachDistInfo
         self.CorrectionInfo = CorrecitonInfo
 
-class ProcessedObj:
+class ProcessedObj(object):
     def __init__(self,obj,ProcessingMethod):
         """
         Initialized a processed data object from raw data, using the specified
@@ -42,8 +42,12 @@ class ProcessedObj:
         slicedTimeSepForce = obj.Data.CreatedFiltered(lowResIdx,
                                                       highResIdx)
         # Create our internal data object, using the same labels as before
-        labs = DataObject.Labels
-        self.ProcessedData = DataObject(TimeSepForce=slicedTimeSepForce)
+        labs = obj.Labels
+        self.ProcessedData = DataObject(TimeSepForce=slicedTimeSepForce,
+                                        Labels=labs,PreProcessed=True)
+    """
+    Following properties just delegate appropriately.
+    """
     @property
     def HiResData(self):
         return self.ProcessedData.Data.HiResData
@@ -55,4 +59,4 @@ class ProcessedObj:
         return self.ProcessedData.MetaData()
     @property
     def Labels(self):
-        return self.labs
+        return self.ProcessedData.Labels

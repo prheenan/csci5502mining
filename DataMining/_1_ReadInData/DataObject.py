@@ -4,11 +4,18 @@ from __future__ import division
 import numpy as np
 
 class LabelObj:
-    def __init__(self,listV):
+    def __init__(self,listV,time):
         self.start = listV[0]
         self.end = listV[1]
         self.listV = listV
+        self.StartTime = time[self.start]
+        self.EndTime = time[self.end]
     def __getitem__(self,idx):
+        """
+        return the *index* (in 'raw' data) associated with 0/1
+        Args:
+            idx: if 0/1, returns index of start/end of event
+        """
         return self.listV[idx]
     def __str__(self):
         return "[{:d}/{:d}]".format(self.start,self.end)
@@ -16,9 +23,20 @@ class LabelObj:
         return str(self)
     def __iter__(self):
         return iter(self.listV)
+    @property
+    def StartTime(self):
+        """
+        Returns the start *time* (in seconds) of the label
+        """
+        return self.StartTime
+    @property
+    def EndTime(self):
+        """
+        Returns the end *time* (in seconds) of the label
+        """
+        return self.EndTime
 
-
-class DataObject:
+class DataObject(object):
     """
     This is the class which we will use to pass around data
     """
@@ -31,17 +49,18 @@ class DataObject:
                 RawTimeSepForce : The Raw TimeSepForce Object, an instance like
                 /CypherReader/ReaderModel/Generic/TimeSepForceObj
         
-                Labels: A LabelObject, For determining where events happen
+                Labels: if preprocessed is false, a list of <start,end> indices.
+                Otherwise, a list of LabelObj (from an already made dataObj)
         
                 PreProcessed: is pre-processed
         """
         assert TimeSepForce is not None
         # POST: at least some raw data or processed data
         self.Data = TimeSepForce
-        if Labels is not None:
-            self.Lab = [LabelObj(l) for l in Labels]
+        if (PreProcessed):
+            self.Lab = Labels
         else:
-            print("labels not existing... XXX debugging...")
+            self.Lab = [LabelObj(l,self.Data.HiResData.time) for l in Labels]
         self.PreProcessed = PreProcessed
     def HasLabels(self):
         return self.Lab is not None

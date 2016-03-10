@@ -40,8 +40,6 @@ class Filter:
         if (timeFilter is None):
             timeFilter = self.timeFilter
         n = min(DataY.size-1,int(np.ceil(timeFilter/deltaTForY)))
-        print(n)
-        print(DataY.size)
         return IgorUtil.savitskyFilter(DataY,nSmooth=n,degree=2)
     def InvolsTimeConst(self,TimeSepForceObj):
         """
@@ -54,8 +52,6 @@ class Filter:
         return self.surfaceThickness/min(meta.ApproachVelocity,
                                          meta.RetractVelocity)
     def GetWhereGradientLessThan(self,time,regionData,timeFilter,threshold):
-        print(regionData.size)
-        print(regionData.shape)
         regionFiltered = self.FilterDataY(time,regionData,timeFilter=timeFilter)
         # get the gradient
         grad = np.gradient(regionFiltered)

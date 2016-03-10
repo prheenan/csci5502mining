@@ -60,13 +60,13 @@ def run():
         deltaT = time[1]-time[0]
         startIdxInWindow = int((labels[i].StartTime-time[0])/(deltaT))
         force -= np.median(force[:startIdxInWindow])
+        # get the filtered version too!
+        filteredForce=mFiltering.FilterDataY(time,force)
         # this would be a great feature -- the derivative of the filtered force,
         # normalized to a standard normal curve
         filteredGradient = np.gradient(filteredForce)
         stdV= np.std(filteredGradient)
         zGrad = (filteredGradient - np.mean(filteredGradient))/stdV
-        # plot the filtered version too!
-        filteredForce=mFiltering.FilterDataY(time,force)
         # convert time to ms (just for plotting). Also just offset the time
         # to zero (again, just to make it easier to look at)
         toMs = 1e3

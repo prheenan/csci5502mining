@@ -16,7 +16,7 @@ class TouchOffObj:
         self.halfwayIdx = halfwayIdx
 
 class Filter:
-    def __init__(self,timeConst=None,degree=2,surfaceThickness=15e-9):
+    def __init__(self,timeConst,degree=2,surfaceThickness=15e-9):
         """
         Initialize a filtering object. 
         Args:
@@ -27,20 +27,6 @@ class Filter:
         """
         self.surfaceThickness = surfaceThickness
         self.timeFilter = timeConst
-    def FilterDataY(self,timeY,DataY,timeFilter=None):
-        """
-        Given a set of times (assumed uniformly increasing)
-        for dataY, filters the data
-        Args:
-            timeY: the time bases to use
-        Returns:
-            filtered Y values
-        """
-        deltaTForY = timeY[1] - timeY[0]
-        if (timeFilter is None):
-            timeFilter = self.timeFilter
-        n = min(DataY.size-1,int(np.ceil(timeFilter/deltaTForY)))
-        return IgorUtil.savitskyFilter(DataY,nSmooth=n,degree=2)
     def InvolsTimeConst(self,TimeSepForceObj):
         """
         Areturns the expected time for the invols curve to run its course
@@ -51,12 +37,14 @@ class Filter:
         meta = TimeSepForceObj.meta
         return self.surfaceThickness/min(meta.ApproachVelocity,
                                          meta.RetractVelocity)
-    def GetWhereGradientLessThan(self,time,regionData,timeFilter,threshold):
-        regionFiltered = self.FilterDataY(time,regionData,timeFilter=timeFilter)
-        # get the gradient
-        grad = np.gradient(regionFiltered)
-        return np.where(grad <= threshold)[0]
-    
+    def FilterDataY(self,timeY,DataY):
+        """
+        Class wrapper for module filterng funciton. Uses filtering constant
+        to filter...
+        Args:
+            See FilterDataY
+        """
+        return FilterDataY(timeY,DataY,self.timeFilter)
     def GetApproachAndRetractTouchoffTimes(self,TimeSepForceObj):
         """
         Given a TimeSepForceObj object (ie: low or high res), 
@@ -71,41 +59,120 @@ class Filter:
         rawY = TimeSepForceObj.force
         time = TimeSepForceObj.time
         timeConst = self.InvolsTimeConst(TimeSepForceObj)
-        # using the meta data, get the approximate 'halfway' mark
-        # split the data, filter, find where the derivative is median, then
-        # first crosses the median - this is either the start or the end of the
-        # touchoff 
-        grad = np.abs(np.gradient(rawY))
-        meta = TimeSepForceObj.meta
-        # science!
-        # Get the diffferent distances we will need
-        startTime= meta.TriggerTime
-        # get the (approximate!) time to 'halfway'
-        halfwayTime = startTime + meta.DwellTime/2
-        halfwayIdx = np.argmin(np.abs(time-halfwayTime))
-        endTime = startTime + meta.DwellTime
-        window = timeConst
-        # write down the indices where we are in the times we care about 
-        regionApproach = np.where( (time <= startTime + window) &
-                                   (time >= startTime) )[0]
-        regionRetract =  np.where( (time <= endTime) &
-                                   (time >= endTime-window) )[0]
-        # offsets into these regons
-        apprOffset = regionApproach[0]
-        retrOffset = regionRetract[0]
-        # get the median of the (raw) derivative in this region
-        rawMedian = np.median(grad)
         # determine where the filtered approach region change is first <=
         # median of unfilted
+        # get the approach and retract indices
+        halfwayIdx,halfwayTime = \
+                    GetHalfwayThroughDwellTimeAndIndex(TimeSepForceObj)
+        # get the start index (of the dwell) near the trigger time
+        startIdx = np.argmin(np.abs(time-TimeSepForceObj.meta.TriggerTime))
+        # end index should be at the start index, plug twice of the halfway
+        # (Through thr dwell) index
+        endIdx = startIdx+(halfwayIdx-startIdx)*2
+        # get the median of the (raw) derivative in the dwell region
+        forceDwell = rawY[startIdx:endIdx]
+        rawMedian = np.median(forceDwell)
+        regionApproach,regionRetract = GetApproxTouchoffRegions(TimeSepForceObj)
         apprRegion = rawY[regionApproach]
         retrRegion = rawY[regionRetract]
-        # get the approach and retract indices
-        approachIdx =self.GetWhereGradientLessThan(time[regionApproach],
-                                                   apprRegion,timeConst,
-                                                   rawMedian)[0] + apprOffset
-        retrIdx= self.GetWhereGradientLessThan(time[regionApproach],
-                                               retrRegion,timeConst,
-                                               rawMedian)[0] + retrOffset
+        apprOffset = regionApproach[0]
+        retrOffset = regionRetract[0]
+        # the approach index is the *last* time (-1) we are below (<=, False)
+        # the median
+        approachIdx = GetWhereCompares(time[regionApproach],
+                                       apprRegion,timeConst,
+                                       rawMedian,False)[-1] + apprOffset
+        # the retract index is the *last* time (-1) we are above (>=, True)
+        # the median
+        retrIdx= GetWhereCompares(time[regionRetract],
+                                  retrRegion,timeConst,
+                                  rawMedian,True)[-1] + retrOffset
         return TouchOffObj(time[approachIdx],approachIdx,time[retrIdx],retrIdx,
                            halfwayTime,halfwayIdx)
 
+
+def FilterDataY(timeY,DataY,timeFilter):
+    """
+    Given a set of times (assumed uniformly increasing)
+    for dataY, filters the data
+    Args:
+        timeY: the time bases to use
+        DataY: the data to filter
+        timeFilter: the time, same units of timeY, to filter
+    Returns:
+        filtered Y values
+    """
+    deltaTForY = timeY[1] - timeY[0]
+    n = min(DataY.size-1,int(np.ceil(timeFilter/deltaTForY)))
+    return IgorUtil.savitskyFilter(DataY,nSmooth=n,degree=2)
+
+def GetWhereCompares(time,regionData,timeFilter,threshold,gt):
+    """ 
+    Get where the filtered vesion of 'regionData' is <= threshold or
+    >= threshold
+    
+    Args:
+        time: time bases of regionData
+        regionData: the region of interest
+        timeFilter: the timescale to filter the data to
+        threshhold: the value to threshhold to 
+        gt: if true, gets indices where gt. Else, gets index where less than
+    """
+    regionFiltered = FilterDataY(time,regionData,timeFilter=timeFilter)
+    # get the gradient
+    if (gt):
+        return np.where(regionFiltered >= threshold)[0]
+    else:
+        return np.where(regionFiltered <= threshold)[0]
+
+def GetHalfwayThroughDwellTimeAndIndex(mObj):
+    """
+    Given a TimeSepForceObj object, gets the approximate time and index to 
+    halfway through the swell and index
+
+    Args:
+        TimeSepForceObj: TimeSepForceObj object, with the trigger and dwell 
+        time in the meta
+    Returns: 
+        tuple of idx,time to halfway
+    """
+    # Get the diffferent distances we will need
+    meta = mObj.meta
+    time = mObj.time
+    startTime= meta.TriggerTime
+    # get the (approximate!) time to 'halfway'
+    halfwayTime = startTime + meta.DwellTime/2
+    halfwayIdx = np.argmin(np.abs(time-halfwayTime))
+    return halfwayIdx,halfwayTime
+
+def GetApproxTouchoffRegions(TimeSepForceObj):
+    """
+    Using the meta data in TimeSepForceObj, gets the approximate touchoff, 
+    within window seconds (in time units of the object)
+    
+    Args:
+        TimeSepForceObj: the object to use
+    Returns:
+        a tuple of indices into the original array:
+        <Approach touchoff, Retract touchoff >
+    """
+    meta = TimeSepForceObj.meta
+    time = TimeSepForceObj.time
+    dwell = meta.DwellTime
+    # 100ms
+    vel = min(meta.ApproachVelocity,meta.ApproachVelocity)
+    surfaceDepth = 50e-9 # 10nm, upper bound
+    deltaT = surfaceDepth/vel
+    window = min(deltaT,dwell/2)
+    # science!
+    # Get the diffferent distances we will need
+    startTime= meta.TriggerTime
+    halfwayTime,halfwayIdx = GetHalfwayThroughDwellTimeAndIndex(TimeSepForceObj)
+    endTime = startTime + dwell
+    # write down the indices where we are in the times we care about
+    delta= window/2
+    regionApproach = np.where( (time <= startTime + delta) &
+                               (time >= startTime - delta) )[0]
+    regionRetract =  np.where( (time <= endTime + delta) &
+                               (time >= endTime- delta) )[0]
+    return regionApproach,regionRetract

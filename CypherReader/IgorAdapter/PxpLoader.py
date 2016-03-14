@@ -100,7 +100,6 @@ def GroupWavesByEnding(WaveObjList,recquiredEndings=None):
         for idx in val:
             tmp[endings[idx].lower()] = WaveObjList[idx]
         finalList[preamble[idx] + key] = tmp
-    print(finalList)
     return finalList
     
 def LoadPxp(inFile):

@@ -1,6 +1,10 @@
 from CypherReader.UnitTests.TestDataCorrections.ModelCorrections.\
     Main_ModelCorrections import GetOriginalAndCorrected,LoadHiResData
-    
+from CypherReader.IgorAdapter.ProcessSingleWave import WaveObj
+from CypherReader.ReaderModel.Generic.WaveDataGroup import WaveDataGroup
+from CypherReader.IgorAdapter import BinaryHDF5Io as BinaryHDF5Io
+
+
 def SaveOutHighResData(filePath,\
         fileIn="../../../CypherReader/UnitTests/LocalData/NUG2TestData.pxp"):
     """
@@ -16,7 +20,8 @@ def SaveOutHighResData(filePath,\
     allData = LoadHiResData(fileIn)
     lowResTime,lowResSep,lowResForce,highResTime,sepExpected,\
         highCorrForce,highResForce = GetOriginalAndCorrected(allData)
-    highResForceObj = WaveObj(DataY=highCorrForce,Note=highResForce.Note)
+    # get the *uncorrected* force ... 
+    highResForceObj = WaveObj(DataY=highResForce.DataY,Note=highResForce.Note)
     highResSepObj = WaveObj(DataY=sepExpected,Note=highResForce.Note)
     # make a wave data group to save out
     toSave = WaveDataGroup({"sep":lowResSep,"force":lowResForce})

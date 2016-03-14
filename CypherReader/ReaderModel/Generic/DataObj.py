@@ -1,5 +1,5 @@
 
-    
+import numpy as np
 
 class DataObj:
     def __init__(self,time,sep,force,metaInfo,filterIdx=None):

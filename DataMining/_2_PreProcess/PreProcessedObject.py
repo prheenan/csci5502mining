@@ -4,8 +4,9 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+import copy
 
-from DataMining._1_ReadInData.DataObject import DataObject
+from DataMining._1_ReadInData.DataObject import DataObject,LabelObj
 
 class DistInfo:
     def __init__(self):
@@ -60,3 +61,34 @@ class ProcessedObj(object):
     @property
     def Labels(self):
         return self.ProcessedData.Labels
+    @property
+    def WindowBounds(self):
+        """
+        Gets the window bounds, as indices, in the original data (ie:
+        absolute start and end indices for the window
+        """
+        return self.HiResData.filterIdx
+    def GetLabelIdxRelativeToWindows(self):
+        """
+        Returns: a 'flat' list of label objects, where the indices are relative
+        to the windows. For example, if the actual labels are 1 and 12,
+        and the window indices are [[1,2,3],[10,11,12]], the 'flat' indices 
+        will be [0,5]. Useful for concatenating and predicting
+        """
+        lab = self.Labels
+        idxByWindows = self.HiResData.GetWindowIdx()
+        timeByWindows = self.HiResData.time
+        # flattrn the window indices
+        flatIdx = [int(i) for idxList in idxByWindows for i in idxList]
+        flatTime = [t for timeList in timeByWindows for t in timeList]
+        flatLabelIdx = []
+        for l in lab:
+            idxStart = flatIdx.index(l.start)
+            idxEnd = flatIdx.index(l.end)
+            newLab = copy.deepcopy(l)
+            # only update the indices (time etc are the same)
+            newLab.start = idxStart
+            newLab.end = idxEnd
+            flatLabelIdx.append(newLab)
+        return flatLabelIdx
+            

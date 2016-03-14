@@ -218,9 +218,12 @@ class HighBandwidthModel(Model):
                                           for ele in listV.keys()])
         maxLengths = map(getMaxLength,waves.values())
         newWaves = dict()
+        print(waves)
         # look through the candidate indices (ie: where we exceed the threshold)
         for i,lenV in enumerate(maxLengths):
             # check if we have enouhg points, and we have at least one more wave
+            print(lenV)
+            print(uniqueNames[i])
             if (lenV >= self.nPointsHighBW and i < len(maxLengths) and
                 self.WavesValidHighBandwidth(waves,uniqueNames,i-1,i)):
                 # then this wave works!

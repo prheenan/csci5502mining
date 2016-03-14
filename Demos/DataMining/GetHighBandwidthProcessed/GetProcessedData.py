@@ -51,6 +51,13 @@ def run():
     # loop through *each* window and plokt
     timeConst = 8e-5
     labels = processedObj.Labels
+    # print off the label information, relative to the windows
+    labelsRelativeToIndex = processedObj.GetLabelIdxRelativeToWindows()
+    for window,labelRel,labelAbs in zip(processedObj.WindowBounds,
+                                        labelsRelativeToIndex,
+                                        labels):
+        print("Label at idx: {:s}, relative to start of {:s}: {:s}".\
+              format(labelAbs,window,labelRel))
     mFiltering = FilterObj.Filter(timeConst = timeConst)
     for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,forceWindow)):
         # convert force to pN (just for plotting)

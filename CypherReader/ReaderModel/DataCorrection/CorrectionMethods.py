@@ -23,7 +23,7 @@ def GetCorrectedAndOffsetHighRes(WaveDataGroup,SliceCorrectLow,SliceCorrectHi,
         (i.e. zsnsr). We always assume the high resolution data lags, so >0.
     
     Returns:
-        A tuple of <Sep,Force> in the offset, corrected limit
+        A tuple of <Sep,Force> in the offset, corrected limit, just the data
     """
     # get the low res time,force and sep
     time,sep,force = WaveDataGroup.CreateTimeSepForceWaveObject().\

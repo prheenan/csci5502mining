@@ -47,4 +47,35 @@ def dff_std(obj):
 
     return features
 
+def dff_min_max(obj):
+    """
+    returns the derivative of the filtered force normalized via min max
+    Args:
+        obj : preprocessed object with the windows we want
+    """
+    def grad_minmax():
+        filteredGradient = np.gradient(filteredForce)
+        norm = (filteredGradient - filteredGradient.min()) / (filteredGradient.max() - filteredGradient.min()) 
+        return norm
+
+    features = list() 
+    timeWindow,sepWindow,forceWindow = \
+        obj.HiResData.GetTimeSepForce()
+    nWindows = len(sepWindow)
+    timeConst = 8e-5
+    mFiltering = FilterObj.Filter(timeConst = timeConst)
+    for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,forceWindow)):
+        # convert force to pN (just for plotting)
+        force *= 1e12
+        # also normalize it so the median before the event is zero (again,
+        # just to make the plot pretty)
+        deltaT = time[1]-time[0]
+        startIdxInWindow = int((labels[i].StartTime-time[0])/(deltaT))
+        force -= np.median(force[:startIdxInWindow])
+        # get the filtered version too!
+        filteredForce=mFiltering.FilterDataY(time,force)
+        features.append(grad_std(filteredForce))
+
+    return features
+
 

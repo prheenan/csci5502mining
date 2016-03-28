@@ -16,24 +16,24 @@ from sqlalchemy import MetaData,and_
 import copy
 
 class TraceObj:
-    def __init__(self,MetaIds,WaveObj,ParamVals,ParamIds):
+    def __init__(self,MetaIds,WaveGroupObj,ParamVals,ParamIds):
         """
         Args:
         MetaIds: a dict with <table>/<ids> pairs for the The ids for all of the 
         tables associated with the User Meta (e.g User, TipType, etc), 
         as well as the experiment and model
         
-        WaveObject: Contains the raw data to save (as DataY) as well as the 
-        meta information (ie: wave note). See ProcessSingleWave
+        WaveGroupObj: AssociatedWaveData we want to save out
 
         Returns: A newly constructed traceObj
         """
 
         self.MetaIds = MetaIds
-        self.WaveObj = WaveObj
+        self.WaveObj = WaveGroupObj
         self.ParamVals = ParamVals
         self.ParamIds = ParamIds
-        self.SaveName = BinaryHDF5Io.GetFileSaveName(WaveObj)
+        self.SaveName = BinaryHDF5Io.GetFileSaveName(WaveGroupObj.\
+                                                     GetNoteElement())
         self.idDot = ap.Namespace(**copy.deepcopy(self.MetaIds))
 
 def GetClassesAndSess(mSqlObj):
@@ -317,7 +317,7 @@ def PushSourceIfNeeded(ToSave,force=False):
         None  
     """
     # check if the file already exists
-    FileName = BinaryHDF5Io.GetFileSaveName(ToSave)
+    FileName = BinaryHDF5Io.GetFileSaveName(ToSave.GetNoteElement())
     # get the pull path (to the actual database...)
     FullPath = IgorUtil.getDatabaseFile(FileName)
     if (pGenUtil.isfile(FullPath) and not force):
@@ -328,9 +328,12 @@ def PushSourceIfNeeded(ToSave,force=False):
         # (ie: just the folder)
         DatabasePath = IgorUtil.getDatabaseFolder()
         # XXX TODO: check that path exists to file?
-        print("XXX File saving disabled while off campus")
-        #BinaryHDF5Io.SaveObjectAsHDF5(FolderPath=DatabasePath,
-        #                              WaveObject=ToSave)
+        try:
+            BinaryHDF5Io.\
+                SaveWaveGroupAsTimeSepForceHDF5(FolderPath=DatabasePath,
+                                                WaveGroup=ToSave)
+        except:
+            print("XXX file saving disabled [off campus?]")
 
 def AddTrace(TraceObj,SqlObj):
     """
@@ -535,8 +538,8 @@ def PushToDatabase(ModelName,AssociatedWaveData,MetaViewParams,
     paramIds = ParameterDescriptions.GetSqlParamIds(ModelRow=ModelData,
                                                     SqlObj=SqlObj)
     # get the name of the file to save the data as
-    ConcatWaveData = AssociatedWaveData.CreateTimeSepForceWaveObject()
-    SourceFile = BinaryHDF5Io.GetFileSaveName(ConcatWaveData)
+    ElementForName = AssociatedWaveData.GetNoteElement()
+    SourceFile = BinaryHDF5Io.GetFileSaveName(ElementForName)
     # get the ID associated with the experiment
     Experiment = InsertOrGetSourceFile(SourceFile,SqlObj=SqlObj)
     idExpMeta = Experiment.idExpMeta
@@ -553,7 +556,7 @@ def PushToDatabase(ModelName,AssociatedWaveData,MetaViewParams,
     # We now pass all of this information to our SqlModel, which takes
     # care of most of the hairy details. (e.g. linking, etc)
     #  XXX TODO: move most of above to the Sql model?
-    mObj = TraceObj(allIds,ConcatWaveData,
+    mObj = TraceObj(allIds,AssociatedWaveData,
                     CurrentParams,paramIds)
     idDot = SyncTraceWithDatabase(mObj,SqlObj=SqlObj)
     idDot.idExpMeta = idExpMeta

@@ -247,7 +247,21 @@ def savefig(figure,fileName,close=True,tight=True,**kwargs):
     if (close):
         plt.close(figure)
 
-def figure(xSize=10,ySize=8,dpi=100):
+def figure(figsize=None,xSize=10,ySize=8,dpi=100):
+    """
+    wrapper for figure, allowing easier setting I think
+
+    Args:
+        figsize: tuple of (x,y). If none, uses xsize and ysize
+        xSize: x size of figure in inhes
+        ySize: y size of figure in inches
+        dpi: dots per inch
+    Returns:
+        figure it created
+    """
+    if (figsize is not None):
+        xSize = figsize[0]
+        ySize = figsize[1]
     return  plt.figure(figsize=(xSize,ySize),dpi=dpi)
 
 def getNStr(n,space = " "):

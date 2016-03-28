@@ -43,27 +43,31 @@ def LoadAllWavesFromPxp(filepath):
     return mWaves
 
 
-def GroupWavesByEnding(WaveObjList,recquiredEndings=None):
+def GroupWavesByEnding(WaveObjs):
     """
     Given a list of waves and (optional) list of endings, groups the waves
 
     Args:
-        WaveObjList: List of wave objects, from LoadAllWavesFromPxp
-        recquiredEndings: optional list of endings for grouping
+        WaveObjs: List of wave objects, from LoadAllWavesFromPxp
     
     Returns:
         dictionary of lists; each sublist is a 'grouping' of waves by extension
     """
     # get all the names of the wave objects
-    names = [o.Name() for o in WaveObjList]
+    rawNames = [o.Name() for o in WaveObjs]
     # assumed waves end with a number, followed by an ending
     # we need to figure out what the endings and numbers are
     digitEndingList = []
-    for n in names:
+    # filter out to objects we are about
+    goodNames = []
+    goodObj = []
+    for n,obj in zip(rawNames,WaveObjs):
         try:
             digitEndingList.append(ProcessSingleWave.IgorNameRegex(n))
-        except ValueError:
-            # not a good wave
+            goodNames.append(n)
+            goodObj.append(obj)
+        except ValueError as e:
+            # not a good wave, go ahead and remove it
             continue
     # first element gives the (assumed unique) ids
     preamble = [ele[0] for ele in digitEndingList]
@@ -77,18 +81,6 @@ def GroupWavesByEnding(WaveObjList,recquiredEndings=None):
     result={}
     for item in idSet:
         result[item]=[i for i,j in enumerate(ids) if j==item]
-    # POST: result has waves grouped by ids. Just need to check all
-    # the recquired endings are there, if need be
-    if (recquiredEndings is not None):
-        for key,val in result.items():
-            # do everything in lowercase
-            mEndings = [endings[i].lower() for i in val]
-            for ext in recquiredEndings:
-                # if the extension isnt found, give up on the key
-                if (ext.lower() not in mEndings):
-                    result.pop(key, None)
-                    break
-    # POST:
     # (1) each key in the result corresponds to a specific ID (with extensions)
     # (2) each value associated with a key is a list of indices
     # Go ahead and group the waves (remember the waves? that's what we care
@@ -97,9 +89,10 @@ def GroupWavesByEnding(WaveObjList,recquiredEndings=None):
     for key,val in result.items():
         tmp = {}
         # append each index to this list
-        for idx in val:
-            tmp[endings[idx].lower()] = WaveObjList[idx]
-        finalList[preamble[idx] + key] = tmp
+        for idxWithSameId in val:
+            objToAdd = goodObj[idxWithSameId]
+            tmp[endings[idxWithSameId].lower()] = objToAdd
+        finalList[preamble[idxWithSameId] + key] = tmp
     return finalList
     
 def LoadPxp(inFile):

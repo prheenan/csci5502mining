@@ -14,7 +14,7 @@ from ReaderModel.SqlDataModel import TraceMetaConverter
 from UnitTests.TestingUtil.UnitTestUtil import ArrClose
 from ReaderController.ControllerEventHandler import EventWindow
 from ReaderModel.Generic import Model
-from IgorAdapter import BinaryHDF5Io 
+from IgorAdapter import BinaryHDF5Io,ProcessSingleWave
 
 def PushAndCheck(ModelName,AssociatedWaveData,MetaIds,ParamMeta,ParamVals,
                  SqlObj):
@@ -63,8 +63,7 @@ def AssertCorrectlyPushed(idNameSpace,AssociatedWaveData,ParamVals,ParamMeta,
     try:
         AssertDataSavedCorrectly(AssociatedWaveData)
     except AssertionError as e:
-        print(e)
-        print("XXX Cannot save data off campus. Must be connected to network." )
+        print("ERROR (non fatal if off campus)" + str(e))
     # Linker tables match
     AssertLinkersCorrect(idNameSpace,SqlObj)
     # Check meta information (TraceMeta table) passes what we expect.

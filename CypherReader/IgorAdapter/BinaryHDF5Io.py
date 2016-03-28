@@ -17,7 +17,6 @@ def GetFileSaveName(WaveMetaData):
     Returns the file name to save this file, given its FileName and Meta Data
     
     Args:
-        FileName: The original file name where the data comes from
         WaveMetaData : The "Note" property from a WaveObject 
         (see ProcessSingleWave)
     Returns:

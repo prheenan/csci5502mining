@@ -3,8 +3,10 @@ from __future__ import division
 # This file is used for importing the common utilities classes.
 import numpy as np
 import matplotlib.pyplot as plt
-import GenUtilities as pGenUtil
+# import the patrick-specific utilities
+import GenUtilities  as pGenUtil
 import PlotUtilities as pPlotUtil
+import CheckpointUtilities as pCheckUtil
 from scipy.signal import savgol_filter
 DEF_FILTER_CONST = 0.005 # 0.5%
 

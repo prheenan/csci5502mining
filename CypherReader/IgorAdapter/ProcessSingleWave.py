@@ -21,13 +21,15 @@ ENDING_CONCAT = "Concat"
 
 # make a verbose pattern for getting names
 IgorNamePattern = re.compile(r"""
-                         (\w+)  # words/characters
-                         (\d+) # followed by four digits exactly
-                         ([a-zA-Z_]*) # endings!""", re.X)
+                         ^ # start of the string
+                         (\w+?)  # words/characters, non greedy (avoid ids)
+                         (\d+) # followed by only digits (id)
+                         ([a-zA-Z_]*) # endings! (e.g. deflv, zsnsr)
+                         $ # end of the string""", re.X)
 def IgorNameRegex(Name):
     """
     Given a wave name, gets the preamble (eg X060715Image) digit (eg: 0001) 
-    and ending (eg: Defl)
+    and ending (eg: Defl). If it cant match, throws an error.
 
     Args:
         Name: name of the wave
@@ -245,12 +247,8 @@ class WaveObj:
         """  
         # do min and max by columns
         # XXX generalize this?
-        minV = np.min(self.DataY,axis=0)
-        maxV = np.max(self.DataY,axis=0)
-        tol = 1e-6
-        dataMatch = (np.abs((self.DataY-other.DataY)/(maxV-minV)) < tol ).all()
         NotesMatch = NotesEqual(self.Note,other.Note)
-        return (dataMatch and NotesMatch)
+        return (DataEqual(self,other) and NotesMatch)
     def SetAsConcatenated(self):
         # Mark this wave as a concatenated wave
         # Change the name to reflect it is concatenated
@@ -279,7 +277,67 @@ class WaveObj:
         sep = self.DataY[:,1]
         force = self.DataY[:,2]
         return time,sep,force
-        
+
+def DataEqual(one,two,tol=1e-6):
+    """
+    checks if the data of two are approximately the same
+    Args:
+        one: WaveObj instance
+        two: WaveObj instance
+        tol: relative tolerance to not exceed
+    """
+    return np.allclose(one.DataY,two.DataY,rtol=tol)
+
+def NotesValsTheSame(n1,n2,tol=1e-6,equal_nan=True):
+    """
+    Checks if two note values are the same. Casts as floats first, if that
+    doesnt work (and it allows two NaNs), checks for string equality
+    
+    Args:
+        n1: the value of the first note
+        n2: the value of the second node
+        tol: the relative tolerance, assuming we can cast
+        equal_nan: true if we should treat NaN as the same for both. A very 
+        good idea to set this to true...
+    Returns:
+        True/false if the notes match within the specified parameters
+    """
+    try:
+        return np.allclose(float(n1),float(n2),rtol=tol,equal_nan=equal_nan)
+    except (ValueError,TypeError) as e:
+        return str(n1) == str(n2)
+
+def GetNoteMismatch(note1,note2):
+    """
+    Given two notes, gets the mismatches between them. Uses 'NotesValsTheSame'
+    as a subroutine, so check that for details
+    
+    Args:
+        note1: the first note
+        note2: the second
+    Returns:
+        a dictionary, each <key:val> is a noteName:noteValue that was in one
+        but not the other, or with mismathed values
+    """
+    keysAsStr = lambda note : [str(s) for s in note.keys()]
+    firstKeys = set(keysAsStr(note1))
+    secondKeys = set(keysAsStr(note2))
+    intersect = set(firstKeys & secondKeys)
+    valsAreTheSame = lambda key: NotesValsTheSame(note1[key],note2[key])
+    # build up the dictionary if they aren't equal
+    mDict= dict( (k,(note1[k],note2[k]))
+                 for k in intersect if not valsAreTheSame(k) )
+    # add in (the possible empty) mismatches from the other
+    keys2 = secondKeys - firstKeys
+    for k in keys2:
+        mDict[k] = (None,note2[k])
+    # same for 1 to two
+    keys1 = firstKeys - secondKeys 
+    for k in keys1:
+        mDict[k] = (note1[k],None)
+    return mDict
+
+
 def NotesEqual(note1,note2):
     """
     Returns true/false if the two notes (dictionaries) are string-identical
@@ -291,14 +349,10 @@ def NotesEqual(note1,note2):
     Returns:
         if the wave has a 'correct' name
     """
-    selfKeys = [str(s) for s in note1.keys()]
-    otherKeys = [str(s) for s in note2.keys()]
-    noteKeysMatch = set(selfKeys) == set(otherKeys)
     # look at the values as strings, avoid funny unicode buisiness, floats,
     # etc.
-    valFunc = lambda key: str(note1[key]) == str(note2[key])
-    valsEqual = sum(map(valFunc,selfKeys)) == len(selfKeys)
-    return noteKeysMatch and valsEqual
+    mDict = GetNoteMismatch(note1,note2)
+    return len(mDict.values()) == 0
     
 def ValidName(mWave):
     """  

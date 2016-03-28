@@ -3,12 +3,9 @@ from __future__ import division
 # This file is used for importing the common utilities classes.
 import numpy as np
 import matplotlib.pyplot as plt
-
 import sys
-sys.path.append("../")
 
-def run():
-    pass
+from DataMiningDemoUtil.HighBandwidthUtil import GetLabelledExample
 
-if __name__ == "__main__":
-    run()
+def GetSingleExample():
+    return GetLabelledExample()

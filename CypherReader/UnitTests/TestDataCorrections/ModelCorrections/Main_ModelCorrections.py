@@ -62,28 +62,28 @@ def GetOriginalAndCorrected(allData):
     # get the corrected Sep and force...
     lowResForceArray = lowResForce.DataY
     highResForceArray = highResForce.DataY
-    lowCorr,highCorrForce = GetCorrectedHiRes(lowResTime,lowResForceArray,
-                                              sliceLo,highResTime,
-                                              highResForceArray,
-                                              sliceHi)
+    lowCorr,highCorrForce,_ = GetCorrectedHiRes(lowResTime,lowResForceArray,
+                                                sliceLo,highResTime,
+                                                highResForceArray,
+                                                sliceHi)
     # get the corrected, interpolated sep
     sepExpected = CorrectAndInteprolateZsnsr(lowResSep.DataY,lowResTime,
                                              timeOffset,highResTime)
     return lowResTime,lowResSep,lowResForce,highResTime,sepExpected,\
         highCorrForce,highResForce
 
-def run():    
+def run(**kwargs):    
     """
     Assuming that the base-level corrections work, tests the the model is still
     correct
 
     Args:
-        param1: This is the first param.
+        **kwargs: passed to low hi res data
     
     Returns:
         This is a description of what is returned.
     """
-    allData = LoadHiResData()
+    allData = LoadHiResData(**kwargs)
     # now ask the model to do the same thing, using a waveDataGroup.
     # this is a much high-level operation.
     _,lowResSep,lowResForce,_,highSepCorrected,highForceCorrected,\

@@ -30,14 +30,48 @@ def GetCorrectedAndOffsetHighRes(WaveDataGroup,SliceCorrectLow,SliceCorrectHi,
                      GetTimeSepForceAsCols()
     # get the high-res force and time 
     forceHi = WaveDataGroup.HighBandwidthGetForce()
-    # time asscociated with force is x
     timeHi = WaveDataGroup.HighBandwidthWaves.values()[0].GetXArray()
+    # ignore the low resolution corrected force and information object
+    sep,force,_,_ = GetCorrectedFromArrays(time,sep,force,timeHi,forceHi,SliceCorrectLow,
+                                           SliceCorrectHi,TimeOffset)
+    return sep,force
+
+def GetCorrectedFromArrays(timeLo,sepLo,forceLo,timeHi,forceHi,SliceCorrectLow,
+                           SliceCorrectHi,TimeOffset,lowSliceRetr=None,
+                           hiSliceAppr=None):
+    """
+    Given the arrays, gets the corrected versions, including offsetting the 
+    zsnsr so that force versus zsnsr is correct
+
+    Args:
+        timeLo: the low resolution time
+        sepLo: the low resolution separation
+        forceLo: the low resolution force
+        timeHi: ibid, hi res
+        forceHi: ibid, hi res
+        SliceCorrectLow: The slice of the low resolution data to fit the 
+        wiggles. Typically, this is the approach
+       
+        SliceCorrectHi: the slice of the high resolution dta to correct. 
+        typically retract
+    
+        TimeOffset: the time offset (hi-low) between the hi and low resolution 
+        curves
+        
+        lowSliceRetr : see GetCorrectedHiRes
+
+        hiSliceAppr : see GetCorrectedHiRes
+    """
     # correct the force
-    _,correctedHiResForce = GetCorrectedHiRes(time,force,SliceCorrectLow,
-                                              timeHi,forceHi,SliceCorrectHi)
+    correctLowResForce,correctedHiResForce,info = \
+            GetCorrectedHiRes(timeLo,forceLo,SliceCorrectLow,
+                              timeHi,forceHi,SliceCorrectHi,
+                              lowSliceRetr=lowSliceRetr,
+                              hiSliceAppr=hiSliceAppr)
     # offset and interpolate the sep (zsnsr method works fine here) 
-    interpHiResSep = CorrectAndInteprolateZsnsr(sep,time,TimeOffset,timeHi)
-    return interpHiResSep,correctedHiResForce
+    interpHiResSep = CorrectAndInteprolateZsnsr(sepLo,timeLo,TimeOffset,timeHi)
+    return interpHiResSep,correctedHiResForce,correctLowResForce,info
+
 
 def GetTimeOffset(delta1,idx1,delta2,idx2):
     """

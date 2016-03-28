@@ -38,6 +38,14 @@ class WaveDataGroup():
         Waves= [ProcessSingleWave.WaveObj(DataY=Sep,Note=Note),
                 ProcessSingleWave.WaveObj(DataY=Force,Note=Note)]
         return ProcessSingleWave.ConcatenateWaves(Waves)
+    def GetNoteElement(self,data=None):
+        """
+        Given a dataset, gets the note element (assumed first)
+        """
+        if (data is None):
+            data = self.AssociatedWaves
+        eleKey = sorted(data.keys())[0]
+        return data[eleKey]
     def DataNote(self,data):
         """
         Gets the data note for a specific data set (dictionary of waves)
@@ -50,13 +58,16 @@ class WaveDataGroup():
         Returns:
              Note corresponding to that element
         """
-        key = sorted(data.keys())[0]
-        return data[key].Note
+        mEle = self.GetNoteElement(data)
+        return mEle.Note
     def Note(self):
         """
         Returns the note object for this data, assumed to be any of the 
         low-res associated waves 
         """
+        return self.DataNote(self.AssociatedWaves)
+    @property
+    def Note(self):
         return self.DataNote(self.AssociatedWaves)
     def CreateTimeSepForceWaveObject(self):
         """

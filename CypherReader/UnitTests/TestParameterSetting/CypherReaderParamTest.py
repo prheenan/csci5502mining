@@ -7,11 +7,10 @@ import sys
 sys.path.append("../")
 sys.path.append("../../")
 sys.path.append("../../../")
-import PyUtil.SqlUtil as SqlUtil
 import ReaderController.Controller as Controller
 from ReaderModel.HighBandwidthFoldUnfold import HighBandwidthModel as HighBw
 import pyqtgraph as pg
-import UnitTests.TestSqlPushing.SqlTestUtil as SqlTestUtil
+from UnitTests.TestingUtil.GuiInteractions import AddIndicesToGuiAndCheck
 from UnitTests.TestDataCorrections.HighbandwidthCorrectionGroundTruth.\
     HighbandwidthCorrectionGroundTruth import idxLowRes,idxHighRes,\
     idxRuptureEvents
@@ -35,35 +34,11 @@ def GuiLoaded(EventWindow):
     Wave = Model.Waves.keys()[0]
     # select this wave...
     EventWindow.Model.SelectWaveByKey(Wave)
-    # Add a bunch of parameters at dummy indices, based on the data
-    waveDataGroup = Model.CurrentWave()
-    associatedWaves = waveDataGroup.values()
-    # get the actual y data for a wave
-    mWave = associatedWaves[0]
-    dataY = mWave.DataY
-    dataX = mWave.GetXArray()
-    n = dataY.size
-    # get all of the parameters
-    nParams = EventWindow.Model.NParams()
-    end = n/3
-    start = 1
-    # make an array of indices for where we clicked (reverse just so it
-    # reads properly / not so crazy)
+    # make an array of indices for where we clicked
     idx = list(idxLowRes) + list(idxHighRes) + list(idxRuptureEvents)
-    # show that the used clicked at all the indices
-    map(EventWindow.UserClickedAtIndex,idx)
-    # check that we actually pushed it...
-    idNamespace = waveDataGroup.SqlIds
-    ParamMeta = EventWindow.Model.ParamMeta
-    # XXX make sure the indices are what we actually put
-    ParamVals = EventWindow.Model.CurrentParams
-    idxToPush = [p.index for p in ParamVals]
-    assert np.allclose(idxToPush,idx) , "Model picked wrong parameters."
-    SqlObj = SqlUtil.InitSqlGetSessionAndClasses()
-    SqlTestUtil.AssertCorrectlyPushed(idNamespace,waveDataGroup,ParamVals,
-                                      ParamMeta,SqlObj)
+    AddIndicesToGuiAndCheck(Model,EventWindow,idx)
     # POST: all done
-    #exit(1)
+    exit(1)
 
 def run():
     Controller.run(Model=HighBw.HighBandwidthModel(),

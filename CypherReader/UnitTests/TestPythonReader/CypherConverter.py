@@ -26,7 +26,8 @@ def GetDeflVObj(DeflObj):
     Gets the 'DeflV' from the defl 
 
     Args:
-        deflObj : Wave Data Object associated with deflObj. Assumes invols are set 
+        deflObj : Wave Data Object associated with deflObj. Assumes invols are 
+        set 
 
     Returns:
         deflection in volts

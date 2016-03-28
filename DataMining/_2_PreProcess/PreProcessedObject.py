@@ -8,23 +8,6 @@ import copy
 
 from DataMining._1_ReadInData.DataObject import DataObject,LabelObj
 
-class DistInfo:
-    def __init__(self):
-        pass
-class CorrectionInfo:
-    def __init__(self):
-        pass
-
-class ProcInfo:
-    def __init__(self,ApproachDistInfo):
-        """
-        Args:
-            ApproachDistInfo: Distribution (DistInfo) of approach curve
-
-            CorrectionInfo: The correction applied to the data
-        """
-        self.ApproachDistInfo=ApproachDistInfo
-        self.CorrectionInfo = CorrecitonInfo
 
 class ProcessedObj(object):
     def __init__(self,obj,ProcessingMethod):

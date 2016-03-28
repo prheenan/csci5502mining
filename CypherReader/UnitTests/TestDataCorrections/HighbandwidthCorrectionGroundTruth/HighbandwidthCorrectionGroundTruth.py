@@ -133,14 +133,14 @@ def PlotCorrections(allData):
     # ... and correct from the second touch forwards
     slice2 = slice(idxTouch2,None,1)
     lowResForceArray= lowResForce.DataY
-    lowCorr,highCorr = GetCorrectedHiRes(lowResTime,lowResForceArray,slice1,
-                                         lowResTime,lowResForceArray,slice2)
+    lowCorr,highCorr,_ = GetCorrectedHiRes(lowResTime,lowResForceArray,slice1,
+                                           lowResTime,lowResForceArray,slice2)
     # do the same, with the high res data
     sliceHigh = slice(idxHighRes[1],None,1)
     highResForceArray = highResForce.DataY
-    lowCorrHiRes,highCorrRes = GetCorrectedHiRes(lowResTime,lowResForceArray,
-                                                 slice1,highResTime,
-                                                 highResForceArray,sliceHigh)
+    lowCorrHiRes,highCorrRes,_ = GetCorrectedHiRes(lowResTime,lowResForceArray,
+                                                   slice1,highResTime,
+                                                   highResForceArray,sliceHigh)
     fig = pPlotUtil.figure(xSize=6,ySize=8)
     plt.subplot(2,1,1)
     plt.plot(lowResTime,lowResForceArray,label="raw")
@@ -288,9 +288,10 @@ def TestInterferenceCorrection(allData):
                                                               idxHighStart)
         nPoints = idxLowStart-o
         degree = DEF_POLYFIT
-        lowCorr,highCorr = GetCorrectedHiRes(lowResTime,lowResForceArray,slice1,
-                                             lowResTime,lowResForceArray,
-                                             slice2)
+        lowCorr,highCorr,_ = GetCorrectedHiRes(lowResTime,lowResForceArray,
+                                               slice1,lowResTime,
+                                               lowResForceArray,
+                                               slice2)
         # corrected high res is supposed to not go out of bounds.. make
         # sure it doesn't touch anything 'bad'
         maxN = lowResTime.size
@@ -325,9 +326,10 @@ def TestInterferenceCorrection(allData):
         nPoints = idxLowStart-o
         # use the hi res index for the hi res force
         degree = DEF_POLYFIT
-        lowCorr,highCorr = GetCorrectedHiRes(lowResTime,lowResForceArray,slice1,
-                                             highResTime,highResForceArray,
-                                             slice2)
+        lowCorr,highCorr,_ = GetCorrectedHiRes(lowResTime,lowResForceArray,
+                                               slice1,highResTime,
+                                               highResForceArray,
+                                               slice2)
         # corrected high res is supposed to not go out of bounds.. make
         # sure it doesn't touch anything 'bad'
         maxN = highResTime.size
@@ -406,8 +408,8 @@ def DemoLowResPlot(allData):
     # ... and correct from the second touch forwards
     slice2 = slice(idxLowRes[1],None,1)
     lowResForceArray= lowResForce.DataY
-    lowCorr,highCorr = GetCorrectedHiRes(lowResTime,lowResForceArray,slice1,
-                                         lowResTime,lowResForceArray,slice2)
+    lowCorr,highCorr,_ = GetCorrectedHiRes(lowResTime,lowResForceArray,slice1,
+                                           lowResTime,lowResForceArray,slice2)
     idxStart = slice2.start
     n = highCorr.size
     idxEnd = idxStart + int((n-idxStart)/2)
@@ -436,7 +438,7 @@ def LoadHiResData(dataFile="../../LocalData/NUG2TestData.pxp"):
     return PxpLoader.LoadPxp(data)
 
 
-def run():
+def run(dataFile="../../LocalData/NUG2TestData.pxp"):
     """
     Reads in the high-bandwidth data, and generates plots showing why 
     we picked the data we did... 
@@ -444,7 +446,7 @@ def run():
     Args:
         None
     """
-    allData = LoadHiResData()
+    allData = LoadHiResData(dataFile)
     # make the plots of the overlays...
     # Commenting out the plotting functions for now...
     #PlotIdxAndTimes(allData)

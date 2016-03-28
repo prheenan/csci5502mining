@@ -5,15 +5,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 import CypherReader.Util.IgorUtil as IgorUtil
-
+from scipy.signal import medfilt
 class TouchOffObj:
-    def __init__(self,apprTime,apprIdx,retrTime,retrIdx,halfwayTime,halfwayIdx):
+    def __init__(self,apprTime,apprIdx,retrTime,retrIdx,halfwayTime,halfwayIdx,
+                 startIdx = 0, endIdx = None):
+        """
+        Records the times and indices associated with a touchoff
+
+        Args:
+            startIdx: the index where we start from. Defaults to 0
+            apprTime: time of approach hitting the surface
+            apprIndex: index of apprTime
+            halfwayTime: time halfway through dwell
+            halfwayIdx: index forhalf wayTime
+            retrTime: time of retratcting leaving the surface
+            retrIdx: index of retrTime
+            endIdx: end index
+        """
+        self.startIdx = startIdx
         self.apprTime = apprTime
         self.apprIdx = apprIdx
         self.retrTime = retrTime
         self.retrIdx = retrIdx
+        self.dwellIdxStart = apprIdx+1
+        self.dwellIdxEnd = retrIdx-1
         self.halfwayTime = halfwayTime
         self.halfwayIdx = halfwayIdx
+        self.endIdx = endIdx
 
 class Filter:
     def __init__(self,timeConst,degree=2,surfaceThickness=15e-9):
@@ -72,16 +90,17 @@ class Filter:
         # get the median of the (raw) derivative in the dwell region
         forceDwell = rawY[startIdx:endIdx]
         rawMedian = np.median(forceDwell)
-        regionApproach,regionRetract = GetApproxTouchoffRegions(TimeSepForceObj)
+        regionApproach,regionRetract = \
+                GetApproxTouchoffRegions(TimeSepForceObj,self.surfaceThickness)
         apprRegion = rawY[regionApproach]
         retrRegion = rawY[regionRetract]
         apprOffset = regionApproach[0]
         retrOffset = regionRetract[0]
-        # the approach index is the *last* time (-1) we are below (<=, False)
+        # the approach index is the *first* time (0) we are above (>=, True)
         # the median
         approachIdx = GetWhereCompares(time[regionApproach],
                                        apprRegion,timeConst,
-                                       rawMedian,False)[-1] + apprOffset
+                                       rawMedian,True)[0] + apprOffset
         # the retract index is the *last* time (-1) we are above (>=, True)
         # the median
         retrIdx= GetWhereCompares(time[regionRetract],
@@ -104,7 +123,9 @@ def FilterDataY(timeY,DataY,timeFilter):
     """
     deltaTForY = timeY[1] - timeY[0]
     n = min(DataY.size-1,int(np.ceil(timeFilter/deltaTForY)))
-    return IgorUtil.savitskyFilter(DataY,nSmooth=n,degree=2)
+    if (n % 2 ==0):
+        n += 1
+    return medfilt(DataY,n)
 
 def GetWhereCompares(time,regionData,timeFilter,threshold,gt):
     """ 
@@ -145,7 +166,7 @@ def GetHalfwayThroughDwellTimeAndIndex(mObj):
     halfwayIdx = np.argmin(np.abs(time-halfwayTime))
     return halfwayIdx,halfwayTime
 
-def GetApproxTouchoffRegions(TimeSepForceObj):
+def GetApproxTouchoffRegions(TimeSepForceObj,surfaceDepth):
     """
     Using the meta data in TimeSepForceObj, gets the approximate touchoff, 
     within window seconds (in time units of the object)
@@ -159,11 +180,9 @@ def GetApproxTouchoffRegions(TimeSepForceObj):
     meta = TimeSepForceObj.meta
     time = TimeSepForceObj.time
     dwell = meta.DwellTime
-    # 100ms
-    vel = min(meta.ApproachVelocity,meta.ApproachVelocity)
-    surfaceDepth = 50e-9 # 10nm, upper bound
+    vel = min(meta.RetractVelocity,meta.ApproachVelocity)
     deltaT = surfaceDepth/vel
-    window = min(deltaT,dwell/2)
+    window = max(deltaT,dwell/8)
     # science!
     # Get the diffferent distances we will need
     startTime= meta.TriggerTime

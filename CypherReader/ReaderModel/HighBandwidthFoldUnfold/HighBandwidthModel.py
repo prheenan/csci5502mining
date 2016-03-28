@@ -22,13 +22,14 @@ class States:
     hiResCorrected = 3
     
 class HighBandwidthModel(Model):
-    def __init__(self,nPointsHighBW=1e6,**kwargs):
+    def __init__(self,nPointsHighBW=2e6,**kwargs):
         """
         Subclass of model which specializes in high bandwidth data.
         
         Args:
              nPointsHighBW : number of datapoints for a wave to be considered
              high bandwidth
+             kwargs: see Generic.Model
         Returns:
             None
         """
@@ -171,33 +172,16 @@ class HighBandwidthModel(Model):
         idA = int(idA)
         idB = int(idB)
         # check that ids are sequential
-        if ( (idA-idB) != 1):
+        if ( (idB-idA) != 1):
             return False
         # POST: (1) ids are sequential
         # check that the endings we need are here
-        assocWavesA = dictV[waveNameA].keys()
-        assocWavesB = dictV[waveNameB].keys()
-        # demand that we have lower and higher waves
         # XXX make this a parameter we put in
-        lowerWaves = ["deflv","zsnsr"]
+        lowerWaves = [ ["deflv","defl"],["zsnsr"]]
         # higher waves have an option: defl or deflv
         higherWaves = [ ["defl","deflv"]]
-        # check for lower and upper waves
-        for waveEndLow in lowerWaves:
-            if waveEndLow not in assocWavesB:
-                return False
-        for waveEndHigh in higherWaves:
-            # check each option
-            for opt in waveEndHigh:
-                found = False
-                if (opt in assocWavesA):
-                    found = True
-                    break
-            # POST: should have found at least one option.
-            if not found:
-                return False
-        # POST: (2) all endings are here.
-        return True
+        return WaveExtInWaveGroup(lowerWaves,dictV[waveNameA]) and \
+            WaveExtInWaveGroup(higherWaves,dictV[waveNameB])
     
     def CustomGetWaves(self,waves,SourceFilePath):
         """
@@ -211,30 +195,55 @@ class HighBandwidthModel(Model):
             None
         """
         uniqueNames = sorted(waves.keys())
+        uniqueObj = [waves[k] for k in uniqueNames]
         # to load the data, subsequent, unique ids should have the proper waves
         # first, look for waves with high-bandwidth data
         # to do this, we simple get the maximum size of each data for all vals
-        getMaxLength = lambda listV: max([listV[ele].DataY.size
-                                          for ele in listV.keys()])
-        maxLengths = map(getMaxLength,waves.values())
+        maxLengths = [max([WaveObj.DataY.size
+                           for WaveExt,WaveObj in GroupedById.items()])
+                          for GroupedById in uniqueObj]
         newWaves = dict()
-        print(waves)
         # look through the candidate indices (ie: where we exceed the threshold)
         for i,lenV in enumerate(maxLengths):
             # check if we have enouhg points, and we have at least one more wave
-            print(lenV)
-            print(uniqueNames[i])
-            if (lenV >= self.nPointsHighBW and i < len(maxLengths) and
+            if (lenV >= self.nPointsHighBW and 
                 self.WavesValidHighBandwidth(waves,uniqueNames,i-1,i)):
                 # then this wave works!
                 name = uniqueNames[i]
                 # get the low resolution and high resolution waves. we
                 # cant convert to force/sep until we interpolate the high res
                 # stuff.
-                lowRes = waves[uniqueNames[i]]
-                hiRes = waves[uniqueNames[i-1]]
+                lowRes = waves[uniqueNames[i-1]]
+                hiRes = waves[uniqueNames[i]]
                 tmp = WaveDataGroup(lowRes)
                 tmp.HighBandwidthSetAssociatedWaves(hiRes)
                 newWaves[name] = tmp
         # POST: all waves set up...
         return newWaves
+    
+def WaveExtInWaveGroup(Opt,mGroup):
+    """
+    Returns true if at least one of the wave extensions listed in 
+    the group is present
+    
+    Args:
+        Opt: list of options to check for. Each element it its own list of 
+        options. For example, opt = [ ["zsnsr","sep"],["defl","deflv"]]
+        checks for (zsnsr or sep) AND (defl or deflv) 
+
+        mGroup: wave group to check 
+    """
+    assocWaves = mGroup.keys()
+    for optList in Opt:
+        # check each option
+        found = False
+        for ext in optList:
+            if (ext in mGroup):
+                found = True
+                break
+        # POST: should have found at least one option.
+        if (found == False):
+            return False
+        # otherwise, continue to the next option
+    # POST: all extensions found
+    return True

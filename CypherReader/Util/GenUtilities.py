@@ -266,6 +266,6 @@ def toLatexStr(numpyArr,fmt="{:s}"):
     Returns:
         The string to use 
     """
-    return " \\\\\n".join([" & ".join( (fmt.format(c)
+    return " \\\\\n".join([" & ".join( (fmt.format(str(c))
                                         for c in line))
                            for line in numpyArr])

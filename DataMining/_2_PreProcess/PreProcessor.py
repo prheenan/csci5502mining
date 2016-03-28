@@ -120,7 +120,7 @@ class MetaPreProcInfo:
         pre-processing step
 
         Args:
-            Summary: CurveSummary object
+            Summary: ExperimentSummar object
             Correction: CorrectionInfo object.
         """
         self.Summary = Summary

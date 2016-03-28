@@ -36,6 +36,19 @@ def run():
     obj = CachedLowRes()
     # process everything
     inf,mProc = PreProcessMain(mFiltering,obj,True)
+    # show how to get some stats
+    # 'summaries' is has all three distributions (raw, corrected,
+    # corrected and filtered)
+
+    # each distribution has data on the approach, dwell, retract 
+    Summaries = mProc.Meta.Summary
+    # Each Distribution has distributions on gradients *and* on the raw Y
+    print("The raw force distribution approach mean is {:.3g}".\
+          format(Summaries.RawDist.approach.RawY.mean))
+    print("The corrected force gradient retract distribution std is {:.3g}".\
+          format(Summaries.CorrectedDist.retract.GradY.std))
+    print("The filtered force distribution dwell min is {:.3g}".\
+          format(Summaries.CorrectedAndFilteredDist.dwell.RawY.distMin))
     # profile...
     PrePlot.PlotProfile("./",inf,mProc,decimate)
     

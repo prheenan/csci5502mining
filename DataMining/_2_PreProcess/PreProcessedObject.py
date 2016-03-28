@@ -29,6 +29,7 @@ class ProcessedObj(object):
         labs = obj.Labels
         self.ProcessedData = DataObject(TimeSepForce=slicedTimeSepForce,
                                         Labels=labs,PreProcessed=True)
+        self.Meta = ProcInfo
     """
     Following properties just delegate appropriately.
     """

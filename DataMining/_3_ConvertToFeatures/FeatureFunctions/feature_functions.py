@@ -21,8 +21,8 @@ def dff_std(obj):
     Args:
         obj : preprocessed object with the windows we want
     """
-    def grad_std():
-        filteredGradient = np.gradient(filteredForce)
+    def grad_std(filtered_obj):
+        filteredGradient = np.gradient(filtered_obj)
         stdV= np.std(filteredGradient)
         zGrad = (filteredGradient - np.mean(filteredGradient))/stdV
         return zGrad
@@ -53,8 +53,8 @@ def dff_min_max(obj):
     Args:
         obj : preprocessed object with the windows we want
     """
-    def grad_minmax():
-        filteredGradient = np.gradient(filteredForce)
+    def grad_minmax(filtered_obj):
+        filteredGradient = np.gradient(filtered_obj)
         norm = (filteredGradient - filteredGradient.min()) / (filteredGradient.max() - filteredGradient.min()) 
         return norm
 
@@ -78,4 +78,49 @@ def dff_min_max(obj):
 
     return features
 
+def dfs_std(obj):
+    """
+    returns the derivative of the filtered separation normalized to a standard normal curve 
+    Args:
+        obj : preprocessed object with the windows we want
+    """
+    def grad_std(filtered_obj):
+        filteredGradient = np.gradient(filtered_obj)
+        stdV= np.std(filteredGradient)
+        zGrad = (filteredGradient - np.mean(filteredGradient))/stdV
+        return zGrad
 
+    features = list() 
+    timeWindow,sepWindow,forceWindow = \
+        obj.HiResData.GetTimeSepForce()
+    nWindows = len(sepWindow)
+    timeConst = 8e-5
+    mFiltering = FilterObj.Filter(timeConst = timeConst)
+    for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,forceWindow)):
+        filteredSep=mFiltering.FilterDataY(time,sep)
+        features.append(grad_std(filteredSep))
+
+    return features
+
+def dfs_minmax(obj):
+    """
+    returns the derivative of the filtered separation normalized via minmax
+    Args:
+        obj : preprocessed object with the windows we want
+    """
+    def grad_minmax(filtered_obj):
+        filteredGradient = np.gradient(filtered_obj)
+        norm = (filteredGradient - filteredGradient.min()) / (filteredGradient.max() - filteredGradient.min()) 
+        return norm
+
+    features = list() 
+    timeWindow,sepWindow,forceWindow = \
+        obj.HiResData.GetTimeSepForce()
+    nWindows = len(sepWindow)
+    timeConst = 8e-5
+    mFiltering = FilterObj.Filter(timeConst = timeConst)
+    for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,forceWindow)):
+        filteredSep=mFiltering.FilterDataY(time,sep)
+        features.append(grad_std(filteredSep))
+
+    return features

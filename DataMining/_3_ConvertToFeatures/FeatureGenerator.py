@@ -4,7 +4,8 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
-
+sys.path.append('./FeatureFunctions')
+from feature_functions import *
 
 def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions):
     """
@@ -20,6 +21,7 @@ def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions):
     Returns:
         NxF feature matrix
     """
-    pass
+    feature_list = [map(function, PreProcessedObjects) for function in ListOfFunctions]
+
 
 

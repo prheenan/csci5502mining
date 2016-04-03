@@ -1,15 +1,10 @@
 # force floating point division. Can still use integer with //
-from __future__ import division
-# This file is used for importing the common utilities classes.
-import numpy as np
-import matplotlib.pyplot as plt
-import sys
-sys.path.append('./FeatureFunctions')
-from feature_functions import *
+from __future__  import division
+from FeatureUtil import *
 
 def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions):
     """
-    Returns the NxF Matrix, where N is the size of all data in windows od
+    Returns the NxF Matrix, where N is the size of all data in windows of
     PreProcessedObjects, F is number of feature functions in ListOfFunctions
 
     Args:
@@ -21,7 +16,19 @@ def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions):
     Returns:
         NxF feature matrix
     """
-    feature_list = [map(function, PreProcessedObjects) for function in ListOfFunctions]
+    feature_matrix = [map(function, PreProcessedObjects) for function in ListOfFunctions]
 
+
+
+#main...
+
+PreProcessedObjects = ?
+
+ListOfFunctions = [
+                    ('force', 'std'),
+                    ('force', 'minmax'),
+                    ('separation', 'std'),
+                    ('separation', 'minmax')
+                  ]
 
 

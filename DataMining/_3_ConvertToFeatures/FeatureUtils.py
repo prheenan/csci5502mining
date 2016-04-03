@@ -19,7 +19,7 @@ def grad_std(filtered_obj):
 	'''
 	Normalizes to a standard curve
 	'''
-	filteredGradient = np.gradient(filtered_ob)
+	filteredGradient = np.gradient(filtered_obj)
 	stdV = np.std(filteredGradient)
 	zGrad = (filteredGradient - np.mean(filteredGradient))/stdV
 	return zGrad
@@ -32,12 +32,12 @@ def grad_minmax(filtered_obj):
 	norm = (filteredGradient - filteredGradient.min()) / (filteredGradient.max() - filteredGradient.min())
 	return norm
 
-def dfFeatureGen(obj, data_type, norm):
+def featureGen(obj, data_type, norm):
 	'''
 	Function finds features of force derivative objects based on arguments
 	Args:
 		obj : Preprocessed data
-		data_type : Type of data give. Options - 'force' or 'separation'
+                data_type : Type of data give. Options - 'force' or 'separation'
 		norm : Type of normalization fo be used. Options - 'std' or 'minmax'
 	'''
 	progs = {
@@ -52,11 +52,6 @@ def dfFeatureGen(obj, data_type, norm):
 	mFiltering = FilterObj.Filter(timeConst = timeConst)
 	if data_type.lower() == 'force':
 		for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,forceWindow)):
-			# Should we keep the first lines in if its just for plotting?
-			force *= 1e12
-			deltaT = time[1] - time[0]
-			startIdxInWindow = int((labels[i].StartTime - time[0]) / (deltaT))
-			force -=np.median(force[:startIdxInWindow])
 			filteredForce = mFiltering.FilterDataY(time,force)
 			features.append(progs[norm](filteredForce))
 

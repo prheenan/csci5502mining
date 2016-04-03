@@ -32,7 +32,8 @@ def GetCorrectedAndOffsetHighRes(WaveDataGroup,SliceCorrectLow,SliceCorrectHi,
     forceHi = WaveDataGroup.HighBandwidthGetForce()
     timeHi = WaveDataGroup.HighBandwidthWaves.values()[0].GetXArray()
     # ignore the low resolution corrected force and information object
-    sep,force,_,_ = GetCorrectedFromArrays(time,sep,force,timeHi,forceHi,SliceCorrectLow,
+    sep,force,_,_ = GetCorrectedFromArrays(time,sep,force,timeHi,forceHi,
+                                           SliceCorrectLow,
                                            SliceCorrectHi,TimeOffset)
     return sep,force
 
@@ -68,6 +69,8 @@ def GetCorrectedFromArrays(timeLo,sepLo,forceLo,timeHi,forceHi,SliceCorrectLow,
                               timeHi,forceHi,SliceCorrectHi,
                               lowSliceRetr=lowSliceRetr,
                               hiSliceAppr=hiSliceAppr)
+    # set the time offset we used
+    info.SetTimeOffset(TimeOffset)
     # offset and interpolate the sep (zsnsr method works fine here) 
     interpHiResSep = CorrectAndInteprolateZsnsr(sepLo,timeLo,TimeOffset,timeHi)
     return interpHiResSep,correctedHiResForce,correctLowResForce,info

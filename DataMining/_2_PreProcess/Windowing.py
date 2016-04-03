@@ -66,18 +66,19 @@ def GetWindowIndices(inf,idx,rawData,correctedObj,minZ=3,minTime=1e-2):
     return finalSlices,offset
     
 
-def GetWindowsFromPreprocessed(inf):
+def GetWindowsFromPreprocessed(inf,windowTime=5e-3,minZ=3):
     """
     Given pre-processed data (see PreProcess Preprocessor.py), gets the indices
     for the high and low resolution windows
 
     Args:
         inf: output of PreProcess
+        minTime: minimum time to save around the window
+        minZ: minimum Z score to start condidering something an event.
     Returns:
         indices for hi-res windows
     """
-    minTime = 1e-2
-    minZ = 3
+    minTime =windowTime
     splits = inf.Meta.Correction.SplitAfterCorrection
     idxArr = [ splits.TouchoffObjLo, splits.TouchoffObjHi]
     rawDataArr = [ inf.OriginalLo, inf.OriginalHi]
@@ -86,10 +87,25 @@ def GetWindowsFromPreprocessed(inf):
     # as well as the final offsets
     slices = []
     offsets = []
-    for idx,rawData,corrected in zip(idxArr,rawDataArr,correctedArr):
-        finalSlices,offset = GetWindowIndices(inf,idx,rawData,corrected,
-                                              minZ=minZ,minTime=minTime)
-        slices.append(finalSlices)
-        offsets.append(offset)
-    return slices,offsets
+    lowRes = inf.Data.LowResData
+    lowSlices,lowOffset = GetWindowIndices(inf, splits.TouchoffObjLo,
+                                           inf.OriginalLo,
+                                           lowRes,
+                                           minZ=minZ,minTime=minTime)
+    # we know the low slices (indices) and the time offsets.
+    # convert to hi-resolution indices
+    deltaLo = lowRes.time[1] - lowRes.time[0]
+    deltaHi = inf.Data.HiResData.time[1] - inf.Data.HiResData.time[0]
+    hiPointsPerLo = deltaLo/deltaHi
+    # get the offset by index
+    offsetTime = inf.Meta.Correction.FitObj.TimeOffset
+    offsetIdx = int(offsetTime/deltaHi)
+    # convert the indices; make sure we round the lower bound *down*,
+    # the upper bound *up*
+    convSlice = lambda x: slice(int(hiPointsPerLo*x.start)+offsetIdx,
+                                np.ceil(hiPointsPerLo*x.stop)+offsetIdx,
+                                1)
+    hiSlices = [ convSlice(s) for s in lowSlices]
+    hiOffset = offsetIdx + int(hiPointsPerLo*lowOffset) 
+    return [lowSlices,hiSlices],[lowOffset,hiOffset]
 

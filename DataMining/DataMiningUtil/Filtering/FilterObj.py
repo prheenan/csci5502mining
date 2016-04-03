@@ -123,9 +123,7 @@ def FilterDataY(timeY,DataY,timeFilter):
     """
     deltaTForY = timeY[1] - timeY[0]
     n = min(DataY.size-1,int(np.ceil(timeFilter/deltaTForY)))
-    if (n % 2 ==0):
-        n += 1
-    return medfilt(DataY,n)
+    return IgorUtil.savitskyFilter(DataY,nSmooth=n,degree=2)
 
 def GetWhereCompares(time,regionData,timeFilter,threshold,gt):
     """ 
@@ -182,7 +180,9 @@ def GetApproxTouchoffRegions(TimeSepForceObj,surfaceDepth):
     dwell = meta.DwellTime
     vel = min(meta.RetractVelocity,meta.ApproachVelocity)
     deltaT = surfaceDepth/vel
-    window = max(deltaT,dwell/8)
+    dwellConst = dwell/10
+    minT = 5e-2
+    window = max([minT,deltaT,dwellConst])
     # science!
     # Get the diffferent distances we will need
     startTime= meta.TriggerTime

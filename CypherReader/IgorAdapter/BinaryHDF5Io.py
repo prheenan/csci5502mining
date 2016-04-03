@@ -5,6 +5,7 @@ import numpy as np
 
 import PyUtil.HDF5Util as HDF5Util
 from CypherReader.ReaderModel.Generic.WaveDataGroup import WaveDataGroup
+from CypherReader.ReaderModel.Generic.TimeSepForceObj import TimeSepForceObj
 import ProcessSingleWave
 from multiprocessing import Pool
 import os
@@ -226,3 +227,16 @@ def ConcatenateWaves(*args,**kwargs):
         See ProcessSingle.ConcatenateWaves
     """
     return ProcessSingleWave.ConcatenateWaves(*args,**kwargs)
+
+def GetDataAsTimeSepForceObject(filePath):
+    """
+    Given a file path, reads the data into a TimeSepForceObj, for easy reading.
+
+    Args:
+        filePath: where to get the data from 
+    
+    Returns:
+        A timeSepForceObj, presummabyly with high resolution data
+    """
+    dataGroup = ReadWaveIntoWaveGroup(filePath)
+    return TimeSepForceObj(dataGroup)

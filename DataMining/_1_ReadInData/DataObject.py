@@ -18,7 +18,7 @@ class LabelObj:
         """
         return self.listV[idx]
     def __str__(self):
-        return "[{:d}/{:d}]".format(self.start,self.end)
+        return "[{:.2f}/{:.2f}]".format(float(self.start),float(self.end))
     def __repr__(self):
         return str(self)
     def __iter__(self):
@@ -60,7 +60,11 @@ class DataObject(object):
         if (PreProcessed):
             self.Lab = Labels
         else:
-            self.Lab = [LabelObj(l,self.Data.HiResData.time) for l in Labels]
+            if (Labels is not None):
+                self.Lab = [LabelObj(l,self.Data.HiResData.time)
+                            for l in Labels]
+            else:
+                self.Lab = None
         self.PreProcessed = PreProcessed
     def HasLabels(self):
         return self.Lab is not None

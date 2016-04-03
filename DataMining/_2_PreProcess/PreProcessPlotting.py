@@ -31,47 +31,68 @@ def PlotOriginalAndCorrections(orig,corr,saveName,decimate):
              SafePlot(corr.force,decimate,toPn),label="Corrected")
     plt.plot(SafePlot(orig.time,decimate),
              SafePlot(orig.force,decimate,toPn),label="Original")
-    pPlotUtil.lazyLabel("Time (s)","Force (pN)","")
+    pPlotUtil.lazyLabel("Time (s)","Force (pN)",
+                        "Correcting Interference Artifact")
     pPlotUtil.savefig(fig,saveName + ".png")
 
 
-def PlotRegionDistributions(inf,saveName):
+def PlotRegionDistributions(inf,saveName,decimate):
+    """
+    Plots the region distributions for the low and high resolution
+    """
     summ = inf.Meta.Summary
     PlotRegionDist(inf.OriginalHi,
                    inf.Meta.Correction.SplitAfterCorrection.TouchoffObjHi,
                    summ.RawDist,
-                   saveName + "HiResOrig.png")
+                   saveName + "HiResOrig.png",\
+                   decimate)
     PlotRegionDist(inf.Data.HiResData,
                    inf.Meta.Correction.SplitAfterCorrection.TouchoffObjHi,
                    summ.CorrectedDist,
-                   saveName + "HiResCorrected.png")
+                   saveName + "HiResCorrected.png",\
+                   decimate)
     
-def PlotRegionDist(mData,correctIdx,stats,saveName):
+def PlotRegionDist(mData,correctIdx,stats,saveName,decimate):
+    """
+    Plots the distributions of the approach, dwell, and retraxt
+    
+    Args:
+        mData: DataObj (ie: with time,sep,force)
+        correctIdx: the indices correcsponding to the regions we want
+        stats: the stats we will display above the (hopefully matching) 
+        distributions
+       
+        saveName: path to save output
+        decimate: decimation factor
+    """
     mCorrectedRegions = GetRegions(correctIdx)
-    fig = pPlotUtil.figure(figsize=(14,14))
+    fig = pPlotUtil.figure(figsize=(18,18))
     nRegions = 3
     nStats = 3
-    nBins = 100
+    nBins = 30
     toPn = 1e12
     for i,(region,style,mStat) in enumerate(zip(mCorrectedRegions,regionStyles,
                                                 stats)):
         mTimes = mData.time[region]
-        force = mData.force[region] * toPn
+        force = mData.force[region]
+        forcePn = force * toPn
         plt.subplot(nStats,nRegions,i+1)
-        plt.plot(mTimes,force,**style)
+        # plot the decimated force
+        plt.plot(SafePlot(mTimes,decimate),
+                 SafePlot(force,decimate,toPn),**style)
         # only label the first
         yLabel = "Force (pN)" if i ==0 else ""
         pPlotUtil.lazyLabel("Time ",yLabel,"")
         plt.subplot(nStats,nRegions,nRegions+i+1)
         # next plot is a histogram of the forces
-        plt.hist(force,nBins,**style)
+        plt.hist(forcePn,nBins,**style)
         ylabelHist = "Histogram" if i == 0 else ""
         title = r"${:3.1f}\pm{:3.1f}$pN".format(mStat.RawY.mean*toPn,
                                                mStat.RawY.std*toPn)
         pPlotUtil.lazyLabel("Force (pN)",ylabelHist,title)
         # finally, a histogram of the filtered forces
         plt.subplot(nStats,nRegions,2*nRegions+i+1)
-        gradY = np.gradient(force)
+        gradY = np.gradient(forcePn)
         plt.hist(gradY,nBins,**style)
         title = r"${:3.1f}\pm{:3.1f}$pN".\
                 format(mStat.GradY.mean*toPn,
@@ -275,7 +296,10 @@ def PlotWindowing(inf,finalSlices,index,rawData,corrData,saveName,decimate):
     corrForce = corrData.force
     # filter just the retraction (if we do the whole thing, get messy edge
     # effects
-    filterRetr = mFilter.FilterDataY(timeCorr,corrForce[retr])
+    corrForceRetrRaw = corrForce[retr]
+    timeRetrRaw = timeCorr[retr]
+    timeRetrDeci = timeRetrRaw[::decimate]
+    filterRetr = mFilter.FilterDataY(timeRetrDeci,corrForceRetrRaw[::decimate])
     nSlices = len(finalSlices)
     nPlots = 3
     fig = pPlotUtil.figure(xSize=16,ySize=12)
@@ -285,9 +309,10 @@ def PlotWindowing(inf,finalSlices,index,rawData,corrData,saveName,decimate):
     pPlotUtil.lazyLabel("","Force (pN)",
                         "Automatic Identification of Ruptures")
     plt.subplot(nPlots,1,2)
-    plt.plot(timeCorr[retr][::decimate],toPn*corrForce[retr][::decimate],'b,',
+    plt.plot(timeRetrRaw,toPn*corrForceRetrRaw,'r-',
              label="Interference Corrected")
-    plt.plot(timeCorr[retr][::decimate],toPn*filterRetr[::decimate],'r-')
+    plt.plot(timeRetrDeci,toPn*filterRetr,'b-',
+             linewidth=1.0,label="Filtered")
     pPlotUtil.lazyLabel("Time","Force (pN)","")
     # slices are absolute; we are plotting against just the retraction,
     # so subtrace off the trraction start
@@ -296,13 +321,21 @@ def PlotWindowing(inf,finalSlices,index,rawData,corrData,saveName,decimate):
         plt.subplot(nPlots,nSlices,nSlices*(nPlots-1)+i+1)
         relativeSlice = slice(s.start-offset,
                               s.stop-offset,1)
-        timeSlice = timeCorr[relativeSlice]
+        # get the time in ms and force in pN
+        timeSlice = timeRetrRaw[relativeSlice]
         timeMsRel = (timeSlice-min(timeSlice))*1000
-        plt.plot(timeMsRel,filterRetr[relativeSlice]*toPn,'r.',ms=2.0)
+        forceRel = corrForceRetrRaw[relativeSlice]*toPn
+        # filter the window...
+        forceFiltWindow = mFilter.FilterDataY(timeSlice,forceRel)
+        plt.plot(timeMsRel,forceRel,'r.',
+                 ms=2.0)
+        plt.plot(timeMsRel,forceFiltWindow,'b-',
+                 linewidth=2.0)
         yLabel = "Force (pN)" if i ==0 else ""
         pPlotUtil.lazyLabel("Relative Time (ms)",yLabel,
                             "Rupture {:d}".format(i+1))
     pPlotUtil.savefig(fig,saveName)
+
 
 
 def PlotProfile(basename,inf,mProc,decimate):
@@ -314,10 +347,115 @@ def PlotProfile(basename,inf,mProc,decimate):
        O(100K) points 
     """
     slices,_ = Win.GetWindowsFromPreprocessed(inf)
-    PlotAllWindows(inf,slices,basename + "WindowingLow",decimate)
-    PlotRegionDistributions(inf,basename + "RegionDist")
+    PlotAllWindows(inf,slices,basename + "Windowing",decimate)
+    PlotRegionDistributions(inf,basename + "RegionDist",decimate)
     DebugPlotTouchoffLocations(inf,basename + "Splitting.png",
                                decimate=decimate)
     DebugPlotCorrections(inf,basename+"corr",
                          decimate=decimate)
 
+def PlotGivenWindows(filterV,time,sep,force,plotFunc):
+    toPn = 1e12
+    for i,(time,force) in enumerate(zip(time,force)):
+        n = time.size
+        plotFunc(i)
+        timeMsRel = (time-min(time))*1000
+        forcePnRel = (force - np.median(force[:int(n/2)])) * toPn
+        filterPnForce =  filterV.FilterDataY(time,forcePnRel)
+        rawLab = "Raw" if i ==0 else ""
+        filterLab = "Filtered" if i ==0 else ""
+        y = "Force (pN)" if i == 0 else ""
+        plt.plot(timeMsRel,forcePnRel,'r-',label=rawLab)
+        plt.plot(timeMsRel,filterPnForce,'b-',lw=3,label=filterLab)
+        pPlotUtil.lazyLabel("Time (ms)",y,"Event {:d}".format(i))
+    
+def PlotWindowsPreProcessed(mProc,outFile):
+    """
+    Given only the output of PreProcessMain, plots the windows
+
+    Args:
+       mProc: (second) output of PreProcessMain
+       outFile: where to save
+    """
+    timeWindowLo,sepWindowLo,forceWindowLo = \
+            mProc.LowResData.GetTimeSepForce()
+    timeWindowHi,sepWindowHi,forceWindowHi = \
+            mProc.HiResData.GetTimeSepForce()
+    filtering = mProc.Meta.Correction.FilterObj
+    nWindows = len(timeWindowHi)
+    subPlotLo = lambda x: plt.subplot(2,nWindows,(x+1))
+    subPlotHi = lambda x: plt.subplot(2,nWindows,nWindows+(x+1))
+    fig = pPlotUtil.figure(ySize=12,xSize=24)
+    PlotGivenWindows(filtering,timeWindowLo,sepWindowLo,forceWindowLo,
+                     subPlotLo)
+    PlotGivenWindows(filtering,timeWindowHi,sepWindowHi,forceWindowHi,
+                     subPlotHi)
+    pPlotUtil.savefig(fig,outFile)
+    
+
+
+def PlotWindowsWithLabels(processedObj,figsize=(24,18),fontsize=20):
+    """
+    Given a processed object, plots the windows with the labels. Does *not*
+    save, just creates the figure
+
+    Args:
+       processedObj: a PreProcesedObject
+    Returns:
+       the figure reference created
+    """
+    # loop through and plot just the regions around the events
+    fig = plt.figure()
+    # get every window
+    timeWindow,sepWindow,forceWindow = \
+        processedObj.HiResData.GetTimeSepForce()
+    # plot the individual windows
+    fig = pPlotUtil.figure(figsize=figsize)
+    nWindows = len(sepWindow)
+    # loop through *each* window and plokt
+    timeConst = 8e-5
+    labels = processedObj.Labels
+    # print off the label information, relative to the windows
+    labelsRelativeToIndex = processedObj.GetLabelIdxRelativeToWindows()
+    for window,labelRel,labelAbs in zip(processedObj.WindowBounds,
+                                        labelsRelativeToIndex,
+                                        labels):
+        print("Label at idx: {:s}, relative to start of {:s}: {:s}".\
+              format(labelAbs,window,labelRel))
+    mFiltering = FilterObj.Filter(timeConst = timeConst)
+    for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,forceWindow)):
+        # convert force to pN (just for plotting)
+        force *= 1e12
+        # also normalize it so the median before the event is zero (again,
+        # just to make the plot pretty)
+        deltaT = time[1]-time[0]
+        startIdxInWindow = int((labels[i].StartTime-time[0])/(deltaT))
+        force -= np.median(force[:startIdxInWindow])
+        # get the filtered version too!
+        filteredForce=mFiltering.FilterDataY(time,force)
+        # this would be a great feature -- the derivative of the filtered force,
+        # normalized to a standard normal curve
+        filteredGradient = np.gradient(filteredForce)
+        stdV= np.std(filteredGradient)
+        zGrad = (filteredGradient - np.mean(filteredGradient))/stdV
+        # convert time to ms (just for plotting). Also just offset the time
+        # to zero (again, just to make it easier to look at)
+        toMs = 1e3
+        minT = min(time)
+        time *= toMs
+        time -= min(time)
+        plt.subplot(2,nWindows,i+1)
+        plt.plot(time,force,'b-',ms=2,label="Window {:d}".format(i))
+        pPlotUtil.lazyLabel("Time (ms)","Force (pN)","",fontsize=fontsize) 
+        plt.plot(time,filteredForce,'r-',lw=2,
+                 label="Filtered Data")
+        plt.subplot(2,nWindows,nWindows+i+1)
+        plt.plot(time,zGrad,color='r',label="Gradient, z scored")
+        # normalize the events to this window
+        norm = lambda x: (x-minT) * toMs
+        plt.axvline(norm(labels[i].StartTime),label="Start of Event")
+        plt.axvline(norm(labels[i].EndTime),label="End of Event")
+        pPlotUtil.lazyLabel("Time (ms)","dForce (pN)","",frameon=True,
+                            legendBgColor='w',fontsize=fontsize,
+                            loc='lower center')
+    return fig

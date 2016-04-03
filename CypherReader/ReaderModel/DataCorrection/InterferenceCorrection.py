@@ -9,6 +9,13 @@ import warnings
 DEF_POLYFIT = 40
 
 class CorrectionInfo:
+    def SetTimeOffset(self,time):
+        """
+        Sets the time offset betwen the low and high resolution times
+        Args:
+            time: the time offset
+        """
+        self.TimeOffset = time
     def __init__(self,coefficients,description,sliceLowAppr,sliceLowRetr,
                  sliceHiAppr,sliceHiRetr):
         """
@@ -34,6 +41,8 @@ class CorrectionInfo:
         # hi resolution slices
         self.sliceHiAppr = sliceHiAppr
         self.sliceHiRetr = sliceHiRetr
+        # time offset (set later) between low and hi res
+        self.TimeOffset = None
         
 
 def GetCorrectedY(X,Y,PolynomalDegree=DEF_POLYFIT):

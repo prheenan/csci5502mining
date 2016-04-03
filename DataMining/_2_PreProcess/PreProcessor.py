@@ -258,8 +258,8 @@ def PreProcess(LowRes,HiRes,mFiltering):
     # Get the low and high resolution indices for the touchoff
     touchoffObjLow = mFiltering.GetApproachAndRetractTouchoffTimes(LowRes)
     touchoffObjHi =  mFiltering.GetApproachAndRetractTouchoffTimes(HiRes)
-    # Get the distributions for the high resolution stuff
-    hiResDist = GetDistributions(touchoffObjHi,HiRes)
+    # Get the distributions for the *low* resolution, raw data stuff
+    rawDist = GetDistributions(touchoffObjHi,HiRes)
     # Correct the hi resolution curve, using the slices we just made
     sliceLoAppr,sliceHiRetr = GetCorrectionSlices(touchoffObjLow.apprIdx,
                                                   touchoffObjHi.retrIdx)
@@ -275,7 +275,6 @@ def PreProcess(LowRes,HiRes,mFiltering):
                                    sliceLoAppr,sliceHiRetr,timeOffset,
                                    lowSliceRetr=sliceLoRetr,
                                    hiSliceAppr=sliceHiAppr)
-
     postLo,postHi = GetPostCorrectionObjects(touchoffObjLow,
                                              touchoffObjHi,
                                              corrInf)
@@ -290,19 +289,20 @@ def PreProcess(LowRes,HiRes,mFiltering):
     # get the corrected distributions.
     correctedDist = GetDistributions(postHi,dataToRet.HiResData)
     # get the regions corresponding to the approach, dwell, and retract
-    mRegions= GetRegions(postHi)
-    # get the force data distribution for each filtered region
-    filteredRegions = [  mFiltering.FilterDataY(dataToRet.HiResData.time[s],
-                                                dataToRet.HiResData.force[s])
+    mRegions= GetRegions(postLo)
+    # get the force data distribution for each filtered region for the *low res*
+    # data
+    filteredRegions = [  mFiltering.FilterDataY(dataToRet.LowResData.time[s],
+                                                dataToRet.LowResData.force[s])
                          for s in mRegions]
     # get the filtered and corrected distribution per region
-    # note that we filter after splitting into regions, to avoid any
+    # note that we filter *after* splitting into regions, to avoid any
     # weirdness between regions (e.g. 'discontinuous' jumps from dwell to
     # approach after correction)
     filteredDist = [DistributionSummary(region) for region in
                     filteredRegions ]
     filteredAndCorrectDist = CurveSummary(*filteredDist)
-    expSummary = ExperimentSummary(hiResDist,correctedDist,
+    expSummary = ExperimentSummary(rawDist,correctedDist,
                                    filteredAndCorrectDist)
     # return all the information needed to proceed.
     return PreProcessInfo(expSummary,correctionObj,dataToRet,LowRes,HiRes)

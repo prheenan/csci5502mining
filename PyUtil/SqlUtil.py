@@ -77,6 +77,15 @@ def GetTraceModelId(mSqlObj,fileObj):
     return mSel[0].idTraceModel
 
 def GetTraceParams(mSqlObj,fileObj):
+    """
+    Gets the parameter values and parameter meta associated with a given file
+
+    Args:
+        mSqlObj: see GetMeta
+        fileObject: see GetMeta
+    Returns:
+        tuple of parameter values, parameter meta
+    """
     conn,mCls,sess = mSqlObj.connClassSess()
     modelId = GetTraceModelId(mSqlObj,fileObj)
     mParams = sess.query(mCls.LinkTraceParam).\
@@ -93,6 +102,14 @@ def GetTraceParams(mSqlObj,fileObj):
     return mParamVals,mParamMeta
 
 def GetMeta(mSqlObj,fileObj):
+    """
+    Gets the TraceMeta assoiated with an object with an idTraceMeta field
+
+    Args:
+        mSqlObj: sqlobject to use to connect to the database
+        fileObject: probably subclass of TraceData, at least has idTraceMeta
+        field
+    """
     conn,mCls,sess = mSqlObj.connClassSess()
     mTrace = sess.query(mCls.TraceMeta)\
                  .filter(mCls.TraceMeta.idTraceMeta ==
@@ -127,19 +144,28 @@ def GetSrcFiles(mSqlObj,ModelName=None):
     return mTraceData
 
 def InitSqlGetSessionAndClasses(databaseStr=CONNECT_STR):
+    """
+    Initializes asql object to the database pointed to by connectStr
+
+    Args:
+        databaseStr : string to connect to database
+    """
     SqlObj = MakeSqlSessionAndEngine(databaseStr)
     mClasses = GenerateSqlClasses(SqlObj)
     SqlObj.setCls(mClasses)
     return SqlObj
 
-def getModelDataFilesInfo(models,serialize=False):
+def getModelDataFilesInfo(models,serialize=False,mSqlObj=None):
     '''
     Gets the "TraceData" for each model in models.
-    :param models: a single or iterable list of models to get the files for
-    :param serialize : if true, essentially turns the sql object into a dict.
-    this is useful for writing to a 'stale' .pkl file 
+
+    Args:
+        models: a single or iterable list of models to get the files for
+        serialize : if true, essentially turns the sql object into a dict.
+        this is useful for writing to a 'stale' .pkl file 
     '''
-    mSqlObj = InitSqlGetSessionAndClasses()
+    if (mSqlObj is None):
+        mSqlObj = InitSqlGetSessionAndClasses()
     toRet = []
     try:
         # loop through each model, get all the files associated

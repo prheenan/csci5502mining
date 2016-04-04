@@ -9,7 +9,8 @@ sys.path.append("../")
 
 import DataMiningUtil.Caching.PreProcessCacher as Caching
 from DataMining._2_PreProcess.PreProcessPlotting import PlotWindowsWithLabels
-from DataMining._3_ConvertToFeatures.FeatureGenerator import FeatureMask
+import PyUtil.CheckpointUtilities as pCheckUtil
+from DataMining._4_Learn.KmeansLearner import KmeansLearner
 
 
 def run(limit=1):
@@ -23,20 +24,30 @@ def run(limit=1):
     # get where the raw data and pre-processed data are
     dataBase = "./DataCache/"
     cacheSub = dataBase + "2_ProcessedData/"
-    # get the list of pre-processed files
-    files = Caching.GetListOfProcessedFiles(cacheSub)
-    allObj =[] 
-    # Read all the pre-processed files
-    for i,fileN in enumerate(files):
-        if (i == limit):
-            break
-        mProc = Caching.ReadProcessedFileFromDirectory(cacheSub,fileN)
-        allObj.append(mProc)
-    testFunc = lambda obj: featureGen(obj,'separation','std')
-    # DEBUGGING: [0] gets the first feature
-    matr = FeatureMask(allObj)
-    plt.plot(matr.SepStd[::10])
+    # how many pre-processed objects to use
+    limit =1
+    # where the (cached) feature maks should go
+    featureCache = dataBase + "3_FeatureMask/FeatureMask.pkl"
+    # get the feature mask, False means dont force regeneration
+    matr = pCheckUtil.getCheckpoint(featureCache,Caching.GetFeatureMask,False,
+                                    cacheSub,limit=limit)
+    # create the learner
+    mLearner = KmeansLearner(matr)
+    # get the predictions (binary array for each point)
+    predictIdx = mLearner.FitAndPredict()
+    # get the *actual* 'gold standard' event labels.
+    eventIdx = mLearner.IdxWhereEvent
+    toPlot = mLearner.FeatureMask.SepStd
+    # find where we predict an event
+    eventPredicted = np.where(predictIdx==1)[0]
+    plt.plot(toPlot,alpha=0.3,label="Feature")
+    plt.plot(eventPredicted,toPlot[eventPredicted],'b.',
+             label="Predicted (Kmeans)")
+    plt.plot(eventIdx,toPlot[eventIdx],'r.',
+             linewidth=3.0,label="Labelled Events")
+    plt.legend()
     plt.show()
+
 
 if __name__ == "__main__":
     run()

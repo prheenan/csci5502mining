@@ -74,5 +74,5 @@ class ProcessedObj(object):
             newLab.start = idxStart
             newLab.end = idxEnd
             flatLabelIdx.append(newLab)
-        return flatLabelIdx
+        return np.array(flatLabelIdx)
             

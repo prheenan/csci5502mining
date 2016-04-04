@@ -22,7 +22,7 @@ def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions):
 
 class FeatureMask:
 
-    def __init__(self,PreProcessedObjects):
+    def __init__(self,PreProcessedObjects,Labels):
         myFuncs = [ lambda obj: featureGen(obj,'separation','std'),
                     lambda obj: featureGen(obj,'separation','minmax'),
                     lambda obj: featureGen(obj,'force','std'),
@@ -36,6 +36,19 @@ class FeatureMask:
         self.SepMinMax = Matrix[1,:]
         self.ForceStd = Matrix[2,:]
         self.ForceMinMax = Matrix[3,:]
+        self.N = self.SepStd.size
+        # save out label information
+        # raw labels is just a copy of all the labels.
+        self._LabelsRaw = Labels
+        # now set the array equal to one where we have events
+        self.IdxWhereEvent = np.concatenate([np.arange(l.start,l.end+1,step=1,
+                                                       dtype=np.int64)
+                                             for obj in Labels for l in obj])
+    @property
+    def LabelsForAllPoints(self):
+        LabelsForAllPoints = np.zeros(self.N,dtype=np.int64)
+        LabelsForAllPoints[self.IdxWhereEvent] = 1
+        return LabelsForAllPoints
 
 
 

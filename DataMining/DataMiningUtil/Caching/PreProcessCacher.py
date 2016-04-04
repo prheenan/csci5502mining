@@ -12,6 +12,7 @@ from DataMining._2_PreProcess.PreProcessInterface import PreProcessMain,\
 import DataMining._2_PreProcess.PreProcessPlotting as PrePlot
 import DataMining._1_ReadInData.DataReader as DataReader
 import os
+from DataMining._3_ConvertToFeatures.FeatureGenerator import FeatureMask
 
 
 def GetPreProcessed(Data,PreProcessOpt,outBase):
@@ -106,3 +107,29 @@ def ReadProcessedFileFromDirectory(BaseDir,DirectoryPath):
     """
     filePath = BaseDir + DirectoryPath + "/" + DirectoryPath + ".pkl"
     return pCheckUtil.loadFile(filePath,useNpy=False)
+
+def GetFeatureMask(cacheSub,limit):
+    """
+    Gets the feature mask (essentially the feature matrix) for up to limit
+    pre-processed objects in 'cachesub' 
+
+    Args:
+        cacheSub: where the cached, pre-processed objects are 
+        limit: maximum number of objects to use to get the feature matrix.
+    """
+    # get the list of pre-processed files
+    files = GetListOfProcessedFiles(cacheSub)
+    allObj =[]
+    allLabels = []
+    # Read all the pre-processed files
+    offset = 0
+    for i,fileN in enumerate(files):
+        if (i == limit):
+            break
+        mProc = ReadProcessedFileFromDirectory(cacheSub,fileN)
+        allObj.append(mProc)
+        allLabels.append(mProc.GetLabelIdxRelativeToWindows())
+    # construct the measure matrix
+    matr = FeatureMask(allObj,allLabels)
+    return matr
+

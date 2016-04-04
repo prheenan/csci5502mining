@@ -16,9 +16,26 @@ def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions):
     Returns:
         NxF feature matrix
     """
-    feature_matrix = [map(function, PreProcessedObjects)
+    feature_matrix = [np.concatenate(map(function, PreProcessedObjects))
                       for function in ListOfFunctions]
     return feature_matrix
+
+class FeatureMask:
+
+    def __init__(self,PreProcessedObjects):
+        myFuncs = [ lambda obj: featureGen(obj,'separation','std'),
+                    lambda obj: featureGen(obj,'separation','minmax'),
+                    lambda obj: featureGen(obj,'force','std'),
+                    lambda obj: featureGen(obj,'force','minmax')
+                    ]
+        matrix = GetFeatureMatrix(PreProcessedObjects,myFuncs)
+        flattenedByFeatures = [np.concatenate(objectV) for objectV in matrix]
+        # Matrix: rows are the feature, columns are the (concatenated 
+        Matrix = np.array(flattenedByFeatures)
+        self.SepStd = Matrix[0,:]
+        self.SepMinMax = Matrix[1,:]
+        self.ForceStd = Matrix[2,:]
+        self.ForceMinMax = Matrix[3,:]
 
 
 

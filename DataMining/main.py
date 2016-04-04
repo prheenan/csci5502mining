@@ -9,8 +9,7 @@ sys.path.append("../")
 
 import DataMiningUtil.Caching.PreProcessCacher as Caching
 from DataMining._2_PreProcess.PreProcessPlotting import PlotWindowsWithLabels
-from DataMining._3_ConvertToFeatures.FeatureGenerator import GetFeatureMatrix
-from DataMining._3_ConvertToFeatures.FeatureUtils import featureGen
+from DataMining._3_ConvertToFeatures.FeatureGenerator import FeatureMask
 
 
 def run(limit=1):
@@ -35,13 +34,9 @@ def run(limit=1):
         allObj.append(mProc)
     testFunc = lambda obj: featureGen(obj,'separation','std')
     # DEBUGGING: [0] gets the first feature
-    matr = GetFeatureMatrix(allObj,[testFunc])[0][0]
-    n = len(matr)
-    for i,featureByWindow in enumerate(matr):
-        plt.subplot(n,1,i+1)
-        plt.plot(featureByWindow)
+    matr = FeatureMask(allObj)
+    plt.plot(matr.SepStd[::10])
     plt.show()
-        
 
 if __name__ == "__main__":
     run()

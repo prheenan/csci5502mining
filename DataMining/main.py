@@ -9,6 +9,8 @@ sys.path.append("../")
 
 import DataMiningUtil.Caching.PreProcessCacher as Caching
 from DataMining._2_PreProcess.PreProcessPlotting import PlotWindowsWithLabels
+from DataMining._3_ConvertToFeatures.FeatureGenerator import GetFeatureMatrix
+from DataMining._3_ConvertToFeatures.FeatureUtils import featureGen
 
 
 def run(limit=1):
@@ -24,14 +26,21 @@ def run(limit=1):
     cacheSub = dataBase + "2_ProcessedData/"
     # get the list of pre-processed files
     files = Caching.GetListOfProcessedFiles(cacheSub)
+    allObj =[] 
     # Read all the pre-processed files
     for i,fileN in enumerate(files):
         if (i == limit):
             break
         mProc = Caching.ReadProcessedFileFromDirectory(cacheSub,fileN)
-        # just for proof of concept, show the windows for this pre-processed
-        PlotWindowsWithLabels(mProc,figsize=(16,8),fontsize=10)
-        plt.show()
+        allObj.append(mProc)
+    testFunc = lambda obj: featureGen(obj,'force','std')
+    # DEBUGGING: [0] gets the first feature
+    matr = GetFeatureMatrix(allObj,[testFunc])[0][0]
+    n = len(matr)
+    for i,featureByWindow in enumerate(matr):
+        plt.subplot(n,1,i+1)
+        plt.plot(featureByWindow)
+    plt.show()
         
 
 if __name__ == "__main__":

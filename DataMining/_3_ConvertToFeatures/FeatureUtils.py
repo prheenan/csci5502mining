@@ -4,6 +4,7 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+import DataMiningUtil.Filtering.FilterObj as FilterObj
 
 def TestFunction(obj):
 	'''
@@ -45,18 +46,20 @@ def featureGen(obj, data_type, norm):
 			'minmax' : grad_minmax
 			}
 	features = list()
-	time,sepWindow,forceWindow = \
-		obj.HighResData.GetTimeSepForce()
+	timeWindow,sepWindow,forceWindow = \
+		obj.HiResData.GetTimeSepForce()
 	nWindows = len(sepWindow)
 	timeConst = 8e-5	#Keep this in?
 	mFiltering = FilterObj.Filter(timeConst = timeConst)
 	if data_type.lower() == 'force':
-		for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,forceWindow)):
+		for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,
+                                                        forceWindow)):
 			filteredForce = mFiltering.FilterDataY(time,force)
 			features.append(progs[norm](filteredForce))
 
 	elif data_type.lower() == 'separation':
-		for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,forceWindow)):
+		for i,(time,sep,force) in enumerate(zip(timeWindow,sepWindow,
+                                                        forceWindow)):
 			filteredSep = mFiltering.FilterDataY(time,sep)
 			features.append(progs[norm](filteredSep))
 

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import sys
 import CypherReader.Util.IgorUtil as IgorUtil
 from scipy.signal import medfilt
+
 class TouchOffObj:
     def __init__(self,apprTime,apprIdx,retrTime,retrIdx,halfwayTime,halfwayIdx,
                  startIdx = 0, endIdx = None):

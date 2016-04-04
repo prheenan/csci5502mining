@@ -1,6 +1,6 @@
 # force floating point division. Can still use integer with //
 from __future__  import division
-from FeatureUtil import *
+from FeatureUtils import *
 
 def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions):
     """
@@ -16,19 +16,11 @@ def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions):
     Returns:
         NxF feature matrix
     """
-    feature_matrix = [map(function, PreProcessedObjects) for function in ListOfFunctions]
+    feature_matrix = [map(function, PreProcessedObjects)
+                      for function in ListOfFunctions]
+    return feature_matrix
 
 
 
-#main...
-
-PreProcessedObjects = ?
-
-ListOfFunctions = [
-                    ('force', 'std'),
-                    ('force', 'minmax'),
-                    ('separation', 'std'),
-                    ('separation', 'minmax')
-                  ]
 
 

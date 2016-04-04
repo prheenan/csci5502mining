@@ -30,7 +30,9 @@ def grad_minmax(filtered_obj):
 	Normalizes via Min-Max
 	'''
 	filteredGradient = np.gradient(filtered_obj)
-	norm = (filteredGradient - filteredGradient.min()) / (filteredGradient.max() - filteredGradient.min())
+        minV = filteredGradient.min()
+        maxV = filteredGradient.max()
+	norm = (filteredGradient - minV) / (maxV-minV)
 	return norm
 
 def featureGen(obj, data_type, norm):
@@ -39,7 +41,8 @@ def featureGen(obj, data_type, norm):
 	Args:
 		obj : Preprocessed data
                 data_type : Type of data give. Options - 'force' or 'separation'
-		norm : Type of normalization fo be used. Options - 'std' or 'minmax'
+		norm : Type of normalization fo be used. Options - 'std' or 
+                'minmax'
 	'''
 	progs = {
 			'std' : grad_std,

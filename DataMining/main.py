@@ -33,7 +33,7 @@ def run(limit=1):
             break
         mProc = Caching.ReadProcessedFileFromDirectory(cacheSub,fileN)
         allObj.append(mProc)
-    testFunc = lambda obj: featureGen(obj,'force','std')
+    testFunc = lambda obj: featureGen(obj,'separation','std')
     # DEBUGGING: [0] gets the first feature
     matr = GetFeatureMatrix(allObj,[testFunc])[0][0]
     n = len(matr)

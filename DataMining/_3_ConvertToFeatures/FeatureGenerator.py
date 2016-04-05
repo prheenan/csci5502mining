@@ -46,6 +46,9 @@ class FeatureMask:
                                              for obj in Labels for l in obj])
     @property
     def LabelsForAllPoints(self):
+        """
+        returns a binary matrix of labels for each element in the mask matrix
+        """
         LabelsForAllPoints = np.zeros(self.N,dtype=np.int64)
         LabelsForAllPoints[self.IdxWhereEvent] = 1
         return LabelsForAllPoints

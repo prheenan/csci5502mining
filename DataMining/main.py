@@ -35,6 +35,8 @@ def run(limit=1):
     mLearner = KmeansLearner(matr)
     # get the predictions (binary array for each point)
     predictIdx = mLearner.FitAndPredict()
+    predEval = mLearner.Evaluate(predictIdx)
+    print(predEval.__dict__)
     # get the *actual* 'gold standard' event labels.
     eventIdx = mLearner.IdxWhereEvent
     toPlot = mLearner.FeatureMask.SepStd

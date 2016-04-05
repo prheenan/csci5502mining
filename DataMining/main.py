@@ -29,7 +29,7 @@ def run(limit=1):
     # where the (cached) feature maks should go
     featureCache = dataBase + "3_FeatureMask/FeatureMask.pkl"
     # get the feature mask, False means dont force regeneration
-    matr = pCheckUtil.getCheckpoint(featureCache,Caching.GetFeatureMask,False,
+    matr = pCheckUtil.getCheckpoint(featureCache,Caching.GetFeatureMask,True,
                                     cacheSub,limit=limit)
     # create the learner
     mLearner = KmeansLearner(matr)

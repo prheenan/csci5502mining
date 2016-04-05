@@ -67,8 +67,8 @@ class ProcessedObj(object):
         flatTime = [t for timeList in timeByWindows for t in timeList]
         flatLabelIdx = []
         for l in lab:
-            idxStart = flatIdx.index(l.start)
-            idxEnd = flatIdx.index(l.end)
+            idxStart = flatIdx.index(int(l.start))
+            idxEnd = flatIdx.index(int(l.end))
             newLab = copy.deepcopy(l)
             # only update the indices (time etc are the same)
             newLab.start = idxStart

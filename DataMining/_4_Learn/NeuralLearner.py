@@ -32,6 +32,7 @@ class NeuralLearner(Learner.Learner):
                                                             FeatureMask.ForceStd,
                                                             FeatureMask.ForceMinMax):
             inputActivations.append((([SepStd, SepMinMax, ForceStd, ForceMinMax]), self.LabelsForAllPoints[labelCounter]))
+            labelCounter += 1
         return inputActivations
 
     def FitAndPredict(self):
@@ -109,7 +110,8 @@ class NeuralNetwork():
 
 	def getLabel(self,node):
 		if node == self.outputLayer[0]:
-			return 1
+			print "event detected!"
+                        return 1
 		elif node == self.outputLayer[1]:
 			return 0
 
@@ -158,6 +160,7 @@ class NeuralNetwork():
 	def checkMinusPhaseOutput(self,timeStep,minusPhaseOutput):
 		label = self.getLabel(minusPhaseOutput[0])
 		correct = False
+                if timeStep[1] == 1: print "event present..."
 		if timeStep[1] == label:
 			correct = True
 		return correct, label
@@ -235,22 +238,25 @@ class NeuralNetwork():
 				weights.pop(0)
 
 	def train(self):
-                self.trial = 0
                 self.epochError = 0
                 self.trainingEpoch()
                 self.epochs += 1
                 error = float(self.epochError) / float(len(self.inputActivations))
-                print "Epoch:", self.epochs, "Error:", error
+                print "Epoch:", self.epochs, "Count Error:", self.epochError, "Percentage Error:", error
 
         def test(self):
             labels = []
             step = 0
+            testerr = 0
             for timeStep in self.inputActivations:
                 if step % 10000 == 0:
                     print "Timestep:", step
                 output = self.minusPhase(timeStep)
+                if self.plusPhase(timeStep,output) == False:
+                    testerr += 1
                 labels.append(self.getLabel(output[0]))
                 step += 1
+            print "Test Count Error:", testerr
             return labels
 
 	def saveWeights(self):

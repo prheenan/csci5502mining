@@ -18,24 +18,14 @@ from DataMining._2_PreProcess.PreProcessInterface import PreProcessMain,\
     PreProccessOpt
 from DataMining.DataMiningUtil.Caching.PreProcessCacher import \
     GetOrCreatedPreProcessed
- 
-def GetData():
-    data = GetLabelledExample()
-    return data
 
-def GetLowResData():
-    Data = GetData()
-    Data.Data.HiResData =Data.Data.LowResData
-    return Data
-
-def CachedLowRes():
-    return pCheckUtil.getCheckpoint("./lowCache.pkl",GetLowResData,False)
 
 def run():
     """
     Shows how auto-processing works
     """
-    mFile = "XNUG2TestData_3512133158_Image1334Concat.hdf"
+    mFile = "XS1_B2_Fast_3509704527_Image0794Defl.hdf"
+    #mFile = "XNUG2TestData_3512133158_Image1334DeflV.hdf"
     baseDirData = baseDir + "DataMining/DataCache/1_RawData/"
     outBase = "./out/"
     timeConst = 1e-3

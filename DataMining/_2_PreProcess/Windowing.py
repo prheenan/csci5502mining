@@ -15,7 +15,7 @@ def GetWindowIndices(inf,idx,rawData,correctedObj,minZ=3,minTime=1e-2):
         inf: see GetWindowsFromPreprocessed
         idx: where the approach, dwell,retract etc are
         rawData: the raw data (DataObj), before any correction
-        corrObj: the corrected data (DataObj), after correction
+        correctedObj: the corrected data (DataObj), after correction
         minZ: minimum Z score where we want to start a window
         minTime: minimum time 
     Return:
@@ -29,10 +29,14 @@ def GetWindowIndices(inf,idx,rawData,correctedObj,minZ=3,minTime=1e-2):
     timeOrig = rawData.time
     filterRetr = filterObj.FilterDataY(timeCorr,
                                        corrData[retr])
+    retrTime = timeOrig[retr]
+    # only consider minTime *after* start of retract, to avoid invols region
+    retrFloor = retrTime[0] + minTime
+    conditionRetr = (retrTime > retrFloor)
     # get where the filtered object is over N sigma away ...
     filteredDist = inf.Meta.Summary.CorrectedAndFilteredDist.retract.GradY
     zscore = (np.gradient(filterRetr) - filteredDist.mean)/(filteredDist.std)
-    idxAbove = np.where(np.abs(zscore) > minZ)[0]
+    idxAbove = np.where( (np.abs(zscore) > minZ) & conditionRetr)[0]
     deltaT = timeCorr[1]-timeCorr[0]
     minNum = int(minTime/deltaT)
     diff = np.diff(idxAbove)

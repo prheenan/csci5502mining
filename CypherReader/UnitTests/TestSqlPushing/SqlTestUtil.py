@@ -263,9 +263,8 @@ def AssertDataSavedCorrectly(AssociatedWaveData):
         None
     """
     # make a copy of the wave, to use as meta data...
-    WaveMetaData = copy.deepcopy(AssociatedWaveData.values()[0])
-    WaveMetaData.SetAsConcatenated()
-    SavedFilePath = BinaryHDF5Io.GetFileSaveName(WaveMetaData)
+    mEle = AssociatedWaveData.GetNoteElement()
+    SavedFilePath = BinaryHDF5Io.GetFileSaveName(mEle)
     DataFilePath = IgorUtil.getDatabaseFile(SavedFilePath)
     assert pGenUtil.isfile(DataFilePath) , "File {:s} wasn't saved.".\
         format(DataFilePath)

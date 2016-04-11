@@ -88,10 +88,10 @@ def SaveWaveGroupAsTimeSepForceHDF5(FolderPath,WaveGroup,
     dataSets = dict()
     attrs = dict()
     # First, get the time, sep, force object from this
+    FilePath = FolderPath + GetFileSaveName(WaveGroup.GetNoteElement())
     concatWave = WaveGroup.CreateTimeSepForceWaveObject()
     dataSets[HDF5Util.DEFAULT_IGOR_DATASET] = concatWave.DataY
     attrs[HDF5Util.DEFAULT_IGOR_DATASET] = concatWave.Note
-    FilePath = FolderPath + GetFileSaveName(concatWave)
     # do we have a high bandwidth wave?
     if (WaveGroup.HasHighBandwidth()):
         try:

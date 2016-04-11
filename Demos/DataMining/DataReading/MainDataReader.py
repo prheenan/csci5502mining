@@ -14,24 +14,29 @@ from DataMining.DataMiningUtil.Caching.PreProcessCacher import \
 import DataMining.DataMiningUtil.Filtering.FilterObj as FilterObj
 import PyUtil.GenUtilities as pGenUtil
 import PyUtil.IgorUtil as IgorUtil
+import matplotlib
+matplotlib.rcParams['agg.path.chunksize'] = int(1e5)
 
 def run():
     source,labels = DataReader.GetAllSourceFilesAndLabels()
-    DataDir = IgorUtil.getDatabaseFolder()
+    DataDir = base + "DataMining/DataCache/1_RawData/"
     # get the pre-processing options object
     timeConst = 1e-3
     mFiltering = FilterObj.Filter(timeConst)
     opt = PreProccessOpt(mFiltering)
-
-    limit = 3
-    for i,(sourceFile,label) in enumerate(zip(source,labels)):
+    limit = None
+    start=0
+    for i,(sourceFile,label) in enumerate(zip(source[start:],labels[start:])):
+        print(label)
         if (i == limit):
             break
         fullPath = DataDir + sourceFile
         outPath = "./out/" + sourceFile + "/"
         # make sure we have a separate directory for each source.
         mDir = pGenUtil.ensureDirExists(outPath)
-        proc = GetOrCreatedPreProcessed(DataDir,sourceFile,mDir,opt,label)
+        proc = GetOrCreatedPreProcessed(DataDir,sourceFile,mDir,opt,label,
+                                        ForceUpdate=False,UseLowOnly=False)
+        
 
 if __name__ == "__main__":
     run()

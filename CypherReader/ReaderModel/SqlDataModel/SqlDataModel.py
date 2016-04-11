@@ -519,7 +519,6 @@ def PushToDatabase(ModelName,AssociatedWaveData,MetaViewParams,
     # Get all of the meta data for the wave (e.g. pulling speed, etc)
     # (XXX assume it is the same for all associated waves)
     WaveNames = AssociatedWaveData.keys()
-    WaveData = AssociatedWaveData[WaveNames[0]]
     # convert all the view parameters to ids
     toIdStr = lambda x : ("id" + x)
     allIds = dict([(toIdStr(table),MetaViewParams[table][toIdStr(table)])

@@ -35,7 +35,7 @@ class TouchOffObj:
         self.endIdx = endIdx
 
 class Filter:
-    def __init__(self,timeConst,degree=2,surfaceThickness=15e-9):
+    def __init__(self,timeConst,degree=2,surfaceThickness=10e-9):
         """
         Initialize a filtering object. 
         Args:
@@ -139,11 +139,35 @@ def GetWhereCompares(time,regionData,timeFilter,threshold,gt):
         gt: if true, gets indices where gt. Else, gets index where less than
     """
     regionFiltered = FilterDataY(time,regionData,timeFilter=timeFilter)
+    # want two conditions: on the derivatve and the aboslute value
+    # condAboveMed will contain the condition on the abolute value
+    condAboveMed = (regionFiltered >= threshold)
+    tol = max(5,int(time.size/100))
+    # if our threshhold was bad (e.g. ringing on the dwell),
+    #we can ust ask for the median of the entire filtered region
+    if (np.sum(condAboveMed) < tol):
+        threshold = np.median(regionFiltered)
+        condAboveMed = (regionFiltered >= threshold)
     # get the gradient
+    deriv = FilterDataY(time,np.gradient(regionFiltered),
+                        timeFilter=timeFilter)
+    # for gt, we want where the derivative and the valus are large (ish)
+    # ls, oppotie
     if (gt):
-        return np.where(regionFiltered >= threshold)[0]
+        idx = np.where((deriv >= 0) & (condAboveMed))[0]
     else:
-        return np.where(regionFiltered <= threshold)[0]
+        # note: '~' is pythons binary not (like ! in cs). Matlab-like, ick.
+        idx = np.where((deriv < 0) & (~condAboveMed))[0]
+    # may need to 'backoff' one of the measurements. try using the derivative
+    # first, then the actual threshhold
+    if (idx.size == 0):
+        idx = (np.where(deriv >= 0) if gt else np.where(deriv <= 0))[0]
+        # if the derivative is screwed up, all we can do is the absolute value
+        if (idx.size < tol):
+            idx = (np.where(condAboveMed) if gt else np.where(~condAboveMed))[0]
+    return idx
+
+    
 
 def GetHalfwayThroughDwellTimeAndIndex(mObj):
     """
@@ -181,9 +205,9 @@ def GetApproxTouchoffRegions(TimeSepForceObj,surfaceDepth):
     dwell = meta.DwellTime
     vel = min(meta.RetractVelocity,meta.ApproachVelocity)
     deltaT = surfaceDepth/vel
-    dwellConst = dwell/10
-    minT = 5e-2
-    window = max([minT,deltaT,dwellConst])
+    # some minimum time, accounting for possible delays between low and hi res
+    minT = 20e-3
+    window = max([minT,deltaT])
     # science!
     # Get the diffferent distances we will need
     startTime= meta.TriggerTime

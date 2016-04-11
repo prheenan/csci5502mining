@@ -7,6 +7,7 @@ import sys
 import igor
 import ProcessSingleWave
 import CypherReader.Util.IgorUtil as IgorUtil
+import CypherReader.Util.GenUtilities as pGenUtil
 
 from pprint import pformat
 from igor.binarywave import load as loadibw
@@ -16,6 +17,21 @@ from igor.record.wave import WaveRecord
 import re
 import collections
 
+
+def LoadPxpFilesFromDirectory(directory):
+    """
+    Given a directory, load all the pxp files into a wave
+
+    Args:
+        directory: loads all directories 
+    Returns:
+        see LoadAllWavesFromPxp
+    """
+    allFiles = pGenUtil.getAllFiles(directory,ext=".pxp")
+    d = []
+    for f in allFiles:
+        d.extend(LoadAllWavesFromPxp(f))
+    return d
 
 def LoadAllWavesFromPxp(filepath):
     """
@@ -37,8 +53,13 @@ def LoadAllWavesFromPxp(filepath):
             # determine if the wave is something we care about
             if (not ProcessSingleWave.ValidName(mWave)):
                 continue
-            WaveObj = ProcessSingleWave.WaveObj(record=mWave,
-                                                SourceFile=filepath)
+            # POST: have a valid name
+            try:
+                WaveObj = ProcessSingleWave.WaveObj(record=mWave,
+                                                    SourceFile=filepath)
+            except ValueError as e:
+                # strange tuple error?
+                continue
             mWaves.append(WaveObj)
     return mWaves
 

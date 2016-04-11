@@ -158,9 +158,10 @@ class WaveObj:
             header = GetHeader(WaveStruct)
             unitsY = header['dataUnits'][dim]
             unitsX = header['dimUnits'][dim]
-            numPoints = header['nDim'][dim]
             # get the associated data, reshape it to numRows x 1
-            self.DataY = WaveStruct['wData'].reshape(numPoints)
+            dat = WaveStruct['wData']
+            numPoints = dat.size
+            self.DataY = dat.reshape(numPoints)
             self.name = GetWaveNameFromHeader(header)
             # save all the other informaton...
             self.Note["UnitsY"] = unitsY

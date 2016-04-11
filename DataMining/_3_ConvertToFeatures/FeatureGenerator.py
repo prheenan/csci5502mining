@@ -2,7 +2,7 @@
 from __future__  import division
 from FeatureUtils import *
 
-def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions):
+def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions,*args,**kwargs):
     """
     Returns the NxF Matrix, where N is the size of all data in windows of
     PreProcessedObjects, F is number of feature functions in ListOfFunctions
@@ -20,15 +20,18 @@ def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions):
                       for function in ListOfFunctions]
     return feature_matrix
 
+
 class FeatureMask:
 
-    def __init__(self,PreProcessedObjects,Labels):
-        myFuncs = [ lambda obj: featureGen(obj,'separation','std'),
-                    lambda obj: featureGen(obj,'separation','minmax'),
-                    lambda obj: featureGen(obj,'force','std'),
-                    lambda obj: featureGen(obj,'force','minmax')
+    def __init__(self,PreProcessedObjects,Labels,FilterConst=400):
+        myFuncs = [ lambda obj: featureGen(obj,'separation','std',FilterConst),
+                    lambda obj: featureGen(obj,'separation','minmax',
+                                           FilterConst),
+                    lambda obj: featureGen(obj,'force','std',FilterConst),
+                    lambda obj: featureGen(obj,'force','minmax',FilterConst),
+                    lambda obj: pFeatureGen(obj,ZScoreByDwell,FilterConst)
                     ]
-        matrix = GetFeatureMatrix(PreProcessedObjects,myFuncs)
+        matrix = GetFeatureMatrix(PreProcessedObjects,myFuncs,FilterConst)
         flattenedByFeatures = [np.concatenate(objectV) for objectV in matrix]
         # Matrix: rows are the feature, columns are the (concatenated 
         Matrix = np.array(flattenedByFeatures)
@@ -36,14 +39,25 @@ class FeatureMask:
         self.SepMinMax = Matrix[1,:]
         self.ForceStd = Matrix[2,:]
         self.ForceMinMax = Matrix[3,:]
+        self.ZScoredByDwell = Matrix[4,:]
         self.N = self.SepStd.size
         # save out label information
         # raw labels is just a copy of all the labels.
         self._LabelsRaw = Labels
         # now set the array equal to one where we have events
-        self.IdxWhereEvent = np.concatenate([np.arange(l.start,l.end+1,step=1,
-                                                       dtype=np.int64)
-                                             for obj in Labels for l in obj])
+        windows = []
+        offset = 0
+        for i,obj in enumerate(Labels):
+            offsetAdd = 0 if (i == 0) else \
+                        sum(f.size
+                            for f in PreProcessedObjects[i-1].HiResData.force)
+            offset += offsetAdd
+            windows.append([np.arange(window.start+offset,
+                                      window.end+1+offset,step=1,
+                                      dtype=np.int64)
+                            for window in obj])
+        self.IdxWhereEvent = np.concatenate(np.concatenate(windows))
+                
     @property
     def LabelsForAllPoints(self):
         """

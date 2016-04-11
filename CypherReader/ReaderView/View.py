@@ -48,12 +48,15 @@ class View:
         # connect the file load button
         btn = QtGui.QPushButton('Load File')
         btn.clicked.connect(EventHandler.HandleLoadFile)
+        btnDir = QtGui.QPushButton('Load Directory')
+        btnDir.clicked.connect(EventHandler.HandleLoadDirectory)
         # list of waves
         self.waveList = QtGui.QListWidget()
         self.waveList.currentTextChanged.connect(EventHandler.HandleSelectWave)
         layout.addWidget(btn, 0, 0)   # button goes in upper-left
-        layout.addWidget(self.waveList, 1, 0)   # parameter after button...
-        layout.addWidget(self.ParamTree, 2, 0)   # parameter after button...
+        layout.addWidget(btnDir, 1, 0)   # button goes in upper-left
+        layout.addWidget(self.waveList, 2, 0)   # parameter after button...
+        layout.addWidget(self.ParamTree, 3, 0)   # parameter after button...
         return layout
     def GetPlotLayoutAndSetHandlers(self,EventHandler):
         """

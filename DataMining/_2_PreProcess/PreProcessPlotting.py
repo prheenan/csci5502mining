@@ -233,17 +233,17 @@ def PlotTouchoff(lowRes,timeObj,mFiltering,saveName,decimate):
     timeAppr = lowRes.time[idxAppr]
     plt.plot(timeAppr,apprY*toPn,'r-',label="Approach")
     filterApprY = mFiltering.FilterDataY(timeAppr,apprY)
-    plt.axvline(**styleAppr)
     plt.plot(timeAppr,filterApprY*toPn,'b-',lw=2,label="Filtered Approach")
-    
+    plt.axvline(**styleAppr)
+
     pPlotUtil.lazyLabel("Time (s)","Force (pN)","",legendBgColor='w',
                         frameon=True)
     plt.subplot(3,1,3)
     timeRetr= lowRes.time[idxRetr]
-    plt.axvline(**styleRetr)
     plt.plot(timeRetr,retrY*toPn,'r-',label="Retract")
     filterApprY = mFiltering.FilterDataY(timeRetr,retrY)
     plt.plot(timeRetr,filterApprY*toPn,'b-',lw=2,label="Filtered Retract")
+    plt.axvline(**styleRetr)
     pPlotUtil.lazyLabel("Time (s)","Force (pN)","",legendBgColor='w',
                         frameon=True)
     pPlotUtil.savefig(fig,saveName + ".png")
@@ -305,11 +305,12 @@ def PlotWindowing(inf,finalSlices,index,rawData,corrData,saveName,decimate):
     fig = pPlotUtil.figure(xSize=16,ySize=12)
     toPn = 1e12
     plt.subplot(nPlots,1,1)
-    plt.plot(timeOrig[retr],toPn*rawData.force[retr],label="Raw Retract")
+    plt.plot(timeOrig[retr],toPn*rawData.force[retr],'k,',alpha=0.7,
+             label="Raw Retract")
     pPlotUtil.lazyLabel("","Force (pN)",
                         "Automatic Identification of Ruptures")
     plt.subplot(nPlots,1,2)
-    plt.plot(timeRetrRaw,toPn*corrForceRetrRaw,'r-',
+    plt.plot(timeRetrRaw,toPn*corrForceRetrRaw,'r,',
              label="Interference Corrected")
     plt.plot(timeRetrDeci,toPn*filterRetr,'b-',
              linewidth=1.0,label="Filtered")
@@ -332,7 +333,7 @@ def PlotWindowing(inf,finalSlices,index,rawData,corrData,saveName,decimate):
         plt.plot(timeMsRel,forceFiltWindow,'b-',
                  linewidth=2.0)
         yLabel = "Force (pN)" if i ==0 else ""
-        pPlotUtil.lazyLabel("Relative Time (ms)",yLabel,
+        pPlotUtil.lazyLabel("Time (ms)",yLabel,
                             "Rupture {:d}".format(i+1))
     pPlotUtil.savefig(fig,saveName)
 
@@ -347,19 +348,37 @@ def PlotProfile(basename,inf,mProc,decimate):
        O(100K) points 
     """
     slices,_ = Win.GetWindowsFromPreprocessed(inf)
-    PlotAllWindows(inf,slices,basename + "Windowing",decimate)
     PlotRegionDistributions(inf,basename + "RegionDist",decimate)
     DebugPlotTouchoffLocations(inf,basename + "Splitting.png",
                                decimate=decimate)
     DebugPlotCorrections(inf,basename+"corr",
                          decimate=decimate)
+    PlotAllWindows(inf,slices,basename + "Windowing",decimate)
 
-def PlotGivenWindows(filterV,time,sep,force,plotFunc):
+
+def PlotGivenWindows(filterV,time,sep,force,plotFunc,timeConst=1000,
+                     timeStr="ms",labels=None):
+    """
+    Given windows and information on how to plot, plots the data and the
+    filtered data.
+
+    Args:
+        filterV: FilterObj to use, 
+        time: time basis to use
+        sep: separation to use 
+        force: force to use
+        plotFunc: call this for each window, with the window number
+        timeConst: what to multiply the time basis by
+        timeStr: units to label the time basis 
+        labels: if not None, list of elements, one per window. each element
+        is a tuple of (start,end) *relative* index into the event in this window
+    """
     toPn = 1e12
     for i,(time,force) in enumerate(zip(time,force)):
         n = time.size
         plotFunc(i)
-        timeMsRel = (time-min(time))*1000
+        tMap = lambda x: (x-min(time))*timeConst
+        timeMsRel = tMap(time)
         forcePnRel = (force - np.median(force[:int(n/2)])) * toPn
         filterPnForce =  filterV.FilterDataY(time,forcePnRel)
         rawLab = "Raw" if i ==0 else ""
@@ -367,7 +386,14 @@ def PlotGivenWindows(filterV,time,sep,force,plotFunc):
         y = "Force (pN)" if i == 0 else ""
         plt.plot(timeMsRel,forcePnRel,'r-',label=rawLab)
         plt.plot(timeMsRel,filterPnForce,'b-',lw=3,label=filterLab)
-        pPlotUtil.lazyLabel("Time (ms)",y,"Event {:d}".format(i))
+        # add in labels, if we have them
+        if (labels is not None):
+            labStart =  r'Label$_i$' if (i == 0) else ""
+            labEnd =  r'Label$_f$' if (i == 0) else ""
+            plt.axvline(tMap(time[labels[i][0]]),label=labStart)
+            plt.axvline(tMap(time[labels[i][1]]),label=labEnd)
+        pPlotUtil.lazyLabel("Time ({:s})".format(timeStr),
+                            y,"Event {:d}".format(i))
     
 def PlotWindowsPreProcessed(mProc,outFile):
     """
@@ -383,13 +409,33 @@ def PlotWindowsPreProcessed(mProc,outFile):
             mProc.HiResData.GetTimeSepForce()
     filtering = mProc.Meta.Correction.FilterObj
     nWindows = len(timeWindowHi)
-    subPlotLo = lambda x: plt.subplot(2,nWindows,(x+1))
-    subPlotHi = lambda x: plt.subplot(2,nWindows,nWindows+(x+1))
+    subPlotLo = lambda x: plt.subplot(3,nWindows,(x+1))
+    subPlotHi = lambda x: plt.subplot(3,nWindows,nWindows+(x+1))
     fig = pPlotUtil.figure(ySize=12,xSize=24)
     PlotGivenWindows(filtering,timeWindowLo,sepWindowLo,forceWindowLo,
-                     subPlotLo)
+                    subPlotLo)
     PlotGivenWindows(filtering,timeWindowHi,sepWindowHi,forceWindowHi,
                      subPlotHi)
+    if (mProc.HasLabels()):
+        labels = mProc.GetLabelIdxRelativeToWindows()
+        # fudge is how many points to left or right of labels to go
+        fudge = 100
+        getByLabelledEvt = lambda x: \
+            [np.concatenate(x)[l.start-fudge:l.end+fudge] for l in labels]
+        # labels rel is the location of the labels relative to the windows
+        # we just made
+        labelsRel = [ (fudge,fudge+(l.end-l.start)) for l in labels]
+        catTime = getByLabelledEvt(timeWindowHi)
+        catForce   =getByLabelledEvt(forceWindowHi)
+        catSep = getByLabelledEvt(sepWindowHi)
+        subplotLab = lambda x: plt.subplot(3,nWindows,2*nWindows+(x+1))
+        # for this one only, go ahead and change the filtering time constant.
+        # XXX should fix
+        hiResFilter = copy.deepcopy(filtering)
+        hiResFilter.timeFilter = 5e-6
+        PlotGivenWindows(hiResFilter,catTime,None,catForce,
+                         subplotLab,timeConst=1e6,timeStr=r"$\mu s$",
+                         labels=labelsRel)
     pPlotUtil.savefig(fig,outFile)
     
 

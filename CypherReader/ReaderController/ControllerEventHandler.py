@@ -66,6 +66,26 @@ class EventWindow(QtGui.QWidget):
             return
         # XXX add in support for more than just pxp
         self.LoadPxpAndAddToModel(fn)
+    def HandleLoadDirectory(self):
+        """
+        Function to interactively (GUI window) handle a file load button click. 
+        loads directories from a directory
+        
+        Args:
+            None
+        Returns:
+            None
+        """
+        fn = str(pg.QtGui.QFileDialog.getExistingDirectory(
+            caption="Load from a directory",
+            directory=""))
+        if fn == '':
+            return
+        # load in all the files
+        toLoad = PxpLoader.LoadPxpFilesFromDirectory(fn)
+        # group them by ending
+        byDir = PxpLoader.GroupWavesByEnding(toLoad)
+        self.Model.AddNewWaves(byDir,fn)
     def LoadPxpAndAddToModel(self,FileName):
         """
         Function to load a pxp file and add associated waves

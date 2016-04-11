@@ -34,6 +34,7 @@ def PreProcessMain(mOpt,DataObj,UseLowOnly=False):
         hiRes = DataObj.Data.LowResData
     else:
         hiRes = DataObj.Data.HiResData
+    DataObj.Data.HiResData = hiRes
     mFiltering = mOpt.filterObj
     lowRes = DataObj.Data.LowResData
     # set the trigger times to be itdentical.
@@ -48,7 +49,6 @@ def PreProcessMain(mOpt,DataObj,UseLowOnly=False):
     sliceByPairs = [ [(s.start,s.stop) for s in resolutionList ] \
                      for resolutionList in slices]
     # create the processed objects we care about..
-    # XXX faking the labels, need to get them from the database etc.
     if (DataObj.HasLabels()):
         inf.Labels = DataObj.Labels
     else:

@@ -2,10 +2,33 @@
 from __future__ import division
 # This file is used for importing the common utilities classes.
 import numpy as np
-
+import matplotlib.pyplot as plt
 from InterferenceCorrection import GetCorrectedHiRes
 from OffsetCorrection import CorrectAndInteprolateZsnsr
+import copy
 
+class TouchoffInfo:
+    def __init__(self,LoadingRate,LoadTime,TriggerIdx,SurfaceIdx,SurfaceTime,
+                 FitInfo):
+        """
+        Class to record information about a touchoff
+        
+        Args:
+            LoadingRate: rate at which force is applied (time deriv)
+            LoadTime: approximate time between start of invols and dwell, > 0
+            TriggerIdx: index in the time basis where either stopped (approach)
+            or started (retract) moving
+            SurfaceIdx: approximate location of the surface
+            FitInfo: the fitting information for these coefficients
+        """
+        self.LoadingRate = LoadingRate
+        self.LoadTime = LoadTime
+        self.TriggerIdx = TriggerIdx
+        self.SurfaceIdx = SurfaceIdx
+        self.FitInfo = FitInfo
+        self.SurfaceTime = SurfaceTime  
+
+        
 def GetCorrectedAndOffsetHighRes(WaveDataGroup,SliceCorrectLow,SliceCorrectHi,
                                  TimeOffset):
     """
@@ -75,6 +98,74 @@ def GetCorrectedFromArrays(timeLo,sepLo,forceLo,timeHi,forceHi,SliceCorrectLow,
     interpHiResSep = CorrectAndInteprolateZsnsr(sepLo,timeLo,TimeOffset,timeHi)
     return interpHiResSep,correctedHiResForce,correctLowResForce,info
 
+def GetApproachCorrectionAndInfo(time,force,triggerTime):
+    """
+    Given the approach time and force, gets the wiggle-corrected version, as
+    well as the information from the fit
+
+    Args:
+        time: the time basis to use
+        force: the force to use
+        triggerTime: where the approach ends (ie: surface touchoff time)
+    Returns:
+        tuple of <corrected force approach,correction info,slice used>
+    """
+    triggerIdx = np.argmin(np.abs(time-triggerTime))
+    # determine corrections on the approach
+    sliceFitAndCorrect = slice(triggerIdx,0,-1)
+    # correct the low resolution data; correct and fit using the same data
+    # with no time offset
+    offset = 0.
+    _,_,corr,info = \
+     GetCorrectedFromArrays(time,time,force,time,force,sliceFitAndCorrect,
+                            sliceFitAndCorrect,offset)
+    return corr,info
+
+def GetApproachInfo(time,force,triggerTime,deg=3):
+    """
+    Returns a TouchoffInfo information object for this approach
+
+    Args:
+        time: see GetApproachCorrectionAndInfo
+        force: see GetApproachCorrectionAndInfo
+        triggerTime: see GetApproachCorrectionAndInfo
+        deg: how high of a polynomial fit to use to calculate the surface 
+    
+    Returns:
+        TouchoffInfo 
+    """
+    # get the correction information
+    corr,info = GetApproachCorrectionAndInfo(time,force,triggerTime)
+    sliceFitAndCorrect = info.sliceLoAppr
+    triggerIdx = sliceFitAndCorrect.start
+    # coefficients from polyfit are ordered from high to low
+# http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.polyfit.html
+    # it follows the loading rate is next to last, offset is last
+    yOffset = info.coeffs[-1]
+    loadingRate = info.coeffs[-2]
+    timeToFit = copy.copy(time[sliceFitAndCorrect])
+    fitTimeOffset = timeToFit[0]
+    timeToFit -= fitTimeOffset
+    corrected = corr[sliceFitAndCorrect]
+    loading = yOffset + loadingRate * (timeToFit)
+    # look at the slide we actually corrected
+    sliceCorrected = slice(sliceFitAndCorrect.start-1,0,-1)
+    forceCorrected = corr[sliceCorrected]
+    timeCorrected = time[sliceCorrected]
+    # get the median (this is more or less the 'true zero')
+    medForce = np.median(forceCorrected)
+    # get the time it takes to get to that median; this is a good
+    # approximation to the invols time
+    diff = np.abs(medForce-loading)
+    idxToSurfaceRel = np.argmin(diff)
+    timeToSurfaceRel = timeToFit[idxToSurfaceRel]
+    # convert the indices to absolute, along the data
+    idxToSurface = sliceCorrected.start - idxToSurfaceRel
+    timeToSurface = time[idxToSurface]
+    loadTime = triggerTime - timeToSurface
+    return TouchoffInfo(loadingRate,loadTime,triggerIdx,
+                        idxToSurface,timeToSurface,info)
+    
 
 def GetTimeOffset(delta1,idx1,delta2,idx2):
     """

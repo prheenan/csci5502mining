@@ -42,6 +42,8 @@ class ProcessedObj(object):
     @property
     def MetaData(self):
         return self.ProcessedData.MetaData()
+    def HasLabels(self):
+        return self.ProcessedData.HasLabels()
     @property
     def Labels(self):
         return self.ProcessedData.Labels

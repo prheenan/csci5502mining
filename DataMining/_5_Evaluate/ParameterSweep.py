@@ -17,14 +17,15 @@ def GetEvaluation(obj,Labels,LearnerToUse,filteringConst=DEF_CONST):
     """
     # Compute the Canny filter for two values of sigma
     toRet = []
-    print("FilteringConst\tF_Score\tPrecision\tRecall")
+    print("FilterN\tF_Sco\tPreci.\tRecall")
     for const in filteringConst:
         mask = FeatureMask(obj,Labels,FilterConst=const)
         # create the learner
         mLearner = LearnerToUse(mask)
         predictIdx = mLearner.FitAndPredict()
         predEval = mLearner.Evaluate(predictIdx)
-        print(const,predEval.f_score,predEval.precision,predEval.recall)
+        print("{:d}\t{:.4f}\t{:.4f}\t{:.4f}".format(
+            const,predEval.f_score,predEval.precision,predEval.recall))
         toRet.append(predEval)
     return toRet
 

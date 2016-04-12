@@ -25,7 +25,7 @@ def run(limit=1):
     dataBase = "./DataCache/"
     cacheSub = dataBase + "2_ProcessedData/"
     # how many pre-processed objects to use
-    limit =1
+    limit =3
     # where the (cached) feature maks should go
     featureCache = dataBase + "3_FeatureMask/FeatureMask.pkl"
     # get the feature mask, False means dont force regeneration

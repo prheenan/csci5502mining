@@ -9,6 +9,7 @@ import sys
 from abc import ABCMeta,abstractmethod
 import sklearn.metrics as scores
 
+
 class EvaluationObject:
     def __init__(self,truth,predictions):
         """
@@ -22,7 +23,8 @@ class EvaluationObject:
                     ['precision',scores.precision_score],
                     ['recall',scores.recall_score],
                     ['f_score',scores.f1_score],
-                    ['confusion_matrix',scores.confusion_matrix]
+                    ['confusion_matrix',scores.confusion_matrix],
+                    ['roc_auc_score',scores.roc_auc_score]
                 ]
         for lab,s in scorers:
             mScore = s(truth,predictions)

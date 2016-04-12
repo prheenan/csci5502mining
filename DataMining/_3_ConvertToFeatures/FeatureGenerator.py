@@ -1,6 +1,8 @@
 # force floating point division. Can still use integer with //
 from __future__  import division
 from FeatureUtils import *
+from pFilters import pFeatureGen,ZScoreByDwell,ForceFiltered,CannyFilter
+
 
 def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions,*args,**kwargs):
     """
@@ -29,7 +31,7 @@ class FeatureMask:
                                            FilterConst),
                     lambda obj: featureGen(obj,'force','std',FilterConst),
                     lambda obj: featureGen(obj,'force','minmax',FilterConst),
-                    lambda obj: pFeatureGen(obj,ZScoreByDwell,FilterConst)
+                    lambda obj: pFeatureGen(obj,CannyFilter,FilterConst)
                     ]
         matrix = GetFeatureMatrix(PreProcessedObjects,myFuncs,FilterConst)
         flattenedByFeatures = [np.concatenate(objectV) for objectV in matrix]
@@ -39,7 +41,7 @@ class FeatureMask:
         self.SepMinMax = Matrix[1,:]
         self.ForceStd = Matrix[2,:]
         self.ForceMinMax = Matrix[3,:]
-        self.ZScoredByDwell = Matrix[4,:]
+        self.CannyFilter = Matrix[4,:]
         self.N = self.SepStd.size
         # save out label information
         # raw labels is just a copy of all the labels.

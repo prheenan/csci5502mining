@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import sys
 import DataMining.DataMiningUtil.Filtering.FilterObj as FilterObj
 
+
 def TestFunction(obj):
 	'''
 	Returns a flattened window
@@ -35,54 +36,6 @@ def grad_minmax(filtered_obj):
 	norm = (filteredGradient - minV) / (maxV-minV)
 	return norm
 
-def ZScoreByDwell(time,sep,force,Meta,tauMultiple=25,**kwargs):
-        """
-        Gets the z score by the product of the local and dwell zscores
-
-        Args:
-            time: the time to use
-            sep: separation
-            force: force
-            Meta:  see pFeatureGen
-
-            tauMultiple: tunable parameter, what fraction of the 'minimum 
-            event time' (fMax-fMin)/(dfMax/dtMax) to tune to
-        Returns: the feature we would like.
-            
-        """
-        summaries = Meta.Summary
-        dwellDist = summaries.CorrectedAndFilteredDist.dwell.GradY
-        dwellMean = dwellDist.mean
-        dwellStd = dwellDist.std
-        # figure out what the tau should be
-        deltaT = time[1] - time[0]
-        filterTau = tauMultiple * deltaT
-        filterData = FilterObj.FilterDataY(time,force,filterTau)
-        # get the filtered graient
-        grad = np.gradient(filterData)
-        # get the z score of this, relative to itself
-        gradZLocal = (grad - np.mean(grad))/np.std(grad)
-        # get the z score of this, relative to 'global' information
-        gradZDwell = (grad - dwellMean)/dwellStd
-        # combine the local and global information
-        zScore =   np.minimum(np.abs(gradZLocal),np.abs(gradZDwell))
-        return  zScore
-
-def pFeatureGen(obj,func,*args,**kwargs):
-        """
-        Patrick-style feature generator
-
-        Args: 
-           obj: PreProcessedObject
-           func: function of the form <time,sep,force,meta>, where
-           time,sep, and force are per-window, meta is all the meta information
-        """
-        meta = obj.Meta
-        timeWindow,sepWindow,forceWindow =  obj.HiResData.GetTimeSepForce()
-        toRet = [func(time,sep,force,meta,*args,**kwargs) \
-                 for time,sep,force in zip(timeWindow,sepWindow,forceWindow)]
-        return toRet
-        
 def featureGen(obj, data_type, norm,timeMultiple=400):
 	'''
 	Function finds features of force derivative objects based on arguments

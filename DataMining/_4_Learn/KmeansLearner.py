@@ -23,7 +23,8 @@ class KmeansLearner(Learner.Learner):
         super(KmeansLearner, self).__init__(FeatureMask)
         self.opts = opts
         # construct the features kmeans will use
-        self.arr = np.reshape(FeatureMask.SepStd,(self.N,1))
+        self.arr = np.reshape([FeatureMask.CannyFilter],
+                              (self.N,1))
     def FitAndPredict(self):
         optionDict = self.opts.__dict__
         toFit = KMeans(**optionDict)

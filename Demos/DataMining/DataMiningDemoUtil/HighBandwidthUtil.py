@@ -7,6 +7,8 @@ from CypherReader.IgorAdapter.ProcessSingleWave import WaveObj
 from DataMining._1_ReadInData.DataObject import DataObject
 import PyUtil.CheckpointUtilities as pCheckUtil
 
+import DataMining.DataMiningUtil.Caching.PreProcessCacher as Caching
+
 
 # hand-given labels for examples 
 EventLabels = [ [9606314,9606338],[9714802,9714831],[9881233,9881346],
@@ -57,3 +59,14 @@ def GetLowResData(base,**kwargs):
 def CachedLowRes(base="../../../",**kwargs):
     return pCheckUtil.getCheckpoint("./lowCache.pkl",GetLowResData,False,base,
                                     **kwargs)
+
+
+def ReadProcessedFiles(baseDir,limit=3):
+    dataBase = baseDir + "DataMining/DataCache/"
+    cacheSub = dataBase + "2_ProcessedData/"
+    # how many pre-processed objects to use
+    # where the (cached) feature maks should go
+    featureCache = "./out.pkl"
+    # get the feature mask, False means dont force regeneration
+    obj,Labels = Caching.GetProcessedObjectsAndLabels(cacheSub,limit=limit)
+    return obj,Labels

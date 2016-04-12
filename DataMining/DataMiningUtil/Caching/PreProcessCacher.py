@@ -152,3 +152,12 @@ def GetFeatureMask(cacheSub,limit):
     matr = FeatureMask(allObj,allLabels)
     return matr
 
+
+
+def ReadProcessedFiles(baseDir,limit=3):
+    dataBase = baseDir + "DataMining/DataCache/"
+    cacheSub = dataBase + "2_ProcessedData/"
+    # how many pre-processed objects to use
+    # get the feature mask, False means dont force regeneration
+    obj,Labels = GetProcessedObjectsAndLabels(cacheSub,limit=limit)
+    return obj,Labels

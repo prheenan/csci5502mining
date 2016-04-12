@@ -60,13 +60,3 @@ def CachedLowRes(base="../../../",**kwargs):
     return pCheckUtil.getCheckpoint("./lowCache.pkl",GetLowResData,False,base,
                                     **kwargs)
 
-
-def ReadProcessedFiles(baseDir,limit=3):
-    dataBase = baseDir + "DataMining/DataCache/"
-    cacheSub = dataBase + "2_ProcessedData/"
-    # how many pre-processed objects to use
-    # where the (cached) feature maks should go
-    featureCache = "./out.pkl"
-    # get the feature mask, False means dont force regeneration
-    obj,Labels = Caching.GetProcessedObjectsAndLabels(cacheSub,limit=limit)
-    return obj,Labels

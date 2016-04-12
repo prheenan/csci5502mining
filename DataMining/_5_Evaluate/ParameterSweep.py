@@ -17,6 +17,7 @@ def GetEvaluation(obj,Labels,LearnerToUse,filteringConst=DEF_CONST):
     """
     # Compute the Canny filter for two values of sigma
     toRet = []
+    print("FilteringConst\tF_Score\tPrecision\tRecall")
     for const in filteringConst:
         mask = FeatureMask(obj,Labels,FilterConst=const)
         # create the learner

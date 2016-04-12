@@ -21,7 +21,7 @@ def run(limit=3):
     # get where the raw data and pre-processed data are
     obj,Labels = Cacher.ReadProcessedFiles(baseDir,limit=limit)
     evalObj = pCheckUtil.getCheckpoint(outDir + "eval_knn.pkl",
-                                       GetEvaluation,False,
+                                       GetEvaluation,True,
                                        obj,Labels,KmeansLearner)
     MakeEvalutionPlot(evalObj,outName=outDir + "knnPlot.png")
 

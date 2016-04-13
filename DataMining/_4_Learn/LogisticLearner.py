@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn import metrics
 from sklearn.naive_bayes import GaussianNB
-
+from sklearn.svm import OneClassSVM
 import Learner
 
 class LogisticLearner(Learner.Learner):
@@ -16,10 +16,8 @@ class LogisticLearner(Learner.Learner):
 		self.expected = FeatureMask.LabelsForAllPoints
 
 	def FitAndPredict(self):
-		test = self.GaussNB()
-		# testExp = 
-		model = LogisticRegression(solver='sag', C=5)
-		model = model.fit(test, self.expected)
+		model = LogisticRegression(solver='sag', max_iter=10, C=5, class_weight='balanced')
+		model = model.fit(self.arr, self.expected)
 		return model.predict(self.arr)
 
 	def GaussNB(self):
@@ -27,3 +25,9 @@ class LogisticLearner(Learner.Learner):
 		model.fit(self.arr, self.expected)
 		print model.predict(self.arr).shape
 		return model.predict(self.arr).reshape(-1,1)
+
+	def oneClass(self):
+		model = OneClassSVM()
+		model.fit(self.arr)
+		model.predict(self.arr)
+		

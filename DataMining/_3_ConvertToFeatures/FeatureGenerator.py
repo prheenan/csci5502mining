@@ -31,7 +31,8 @@ class FeatureMask:
                                            FilterConst),
                     lambda obj: featureGen(obj,'force','std',FilterConst),
                     lambda obj: featureGen(obj,'force','minmax',FilterConst),
-                    lambda obj: pFeatureGen(obj,CannyFilter,FilterConst)
+                    lambda obj: pFeatureGen(obj,CannyFilter,FilterConst),
+                    lambda obj: pFeatureGen(obj,ZScoreByDwell,FilterConst)
                     ]
         matrix = GetFeatureMatrix(PreProcessedObjects,myFuncs,FilterConst)
         flattenedByFeatures = [np.concatenate(objectV) for objectV in matrix]
@@ -42,6 +43,7 @@ class FeatureMask:
         self.ForceStd = Matrix[2,:]
         self.ForceMinMax = Matrix[3,:]
         self.CannyFilter = Matrix[4,:]
+        self.ZScoreByDwell = Matrix[5,:]
         self.N = self.SepStd.size
         # save out label information
         # raw labels is just a copy of all the labels.

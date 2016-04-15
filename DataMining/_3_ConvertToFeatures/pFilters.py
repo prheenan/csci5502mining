@@ -8,7 +8,9 @@ import DataMining.DataMiningUtil.Filtering.FilterObj as FilterObj
 from scipy import ndimage as ndi
 from skimage import feature
 from scipy.stats import norm
+from FeatureLib.step_detect import step_detect
 
+from hmmlearn import hmm
 
 def GetFilterConst(time,Multiplier):
         """
@@ -88,6 +90,27 @@ def CannyFilter(time,sep,force,Meta,tauMultiple=25,**kwargs):
         where1 = np.where(toRet == 1)[0]
         return toRet
 
+def MinMaxNorm(y):
+        minV = np.min(y)
+        maxV = np.max(y)
+        return (y - minV)/(maxV-minV)
+
+def HmmFilter(time,step,force,Meta,tauMultiple=25,n_iter=100,n_states=3,
+        **kwargs):
+        filterData = FilterToTau(time,tauMultiple,force)
+        model = hmm.GaussianHMM(n_components=n_states, covariance_type="full",
+                                n_iter=n_iter)
+        model.fit( [filterData])
+        return model.predict(filterData)
+
+def ForwardWaveletTx(time,sep,force,Meta,tauMultiple=25,nWaveletIters=10,
+                     **kwargs):
+        filterData = FilterToTau(time,tauMultiple,force)
+        detected = step_detect.mz_fwt(filterData, n=nWaveletIters)
+        filtered = np.abs(FilterToTau(time,tauMultiple,
+                                      detected - np.median(detected)))
+        return filtered/max(filtered)
+
 def ForceFiltered(time,sep,force,Meta,tauMultiple=25,**kwargs):
         """
         Gets the filtered force as min-max amount all
@@ -131,10 +154,10 @@ def ZScoreByDwell(time,sep,force,Meta,tauMultiple=25,**kwargs):
         # get the filtered graient
         grad = np.gradient(filterData)
         # get the z score of this, relative to itself
-        gradZLocal = FilterToTau(time,tauMultiple,
-                                 (grad - np.mean(grad))/np.std(grad))
+        meanV = np.mean(grad)
+        gradZLocal = FilterToTau(time,tauMultiple,(grad-meanV)/np.std(grad))
         # get the z score of this, relative to 'global' information
-        gradZDwell = FilterToTau(time,tauMultiple,(grad - dwellMean)/dwellStd)
+        gradZDwell = FilterToTau(time,tauMultiple,(grad-dwellMean)/dwellStd)
         # combine the local and global information
         zScore =    FilterToTau(time,tauMultiple,gradZLocal)
         # get the survival probability
@@ -150,6 +173,7 @@ def ZScoreByDwell(time,sep,force,Meta,tauMultiple=25,**kwargs):
         maxz = 13.89
         maxProb = np.abs(norm.logsf(maxz))
         final = np.minimum(maxProb,zerod)/maxProb
+        # 'thresh' is the minimum zscore we want/100..
         thresh = 0.01
         final[np.where(final < thresh)] = 0
         return final

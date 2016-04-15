@@ -54,14 +54,20 @@ class ProcessedObj(object):
         absolute start and end indices for the window
         """
         return self.HiResData.filterIdx
-    def GetLabelIdxRelativeToWindows(self):
+    def GetLabelIdxRelativeToWindows(self,labelSlice=None):
         """
         Returns: a 'flat' list of label objects, where the indices are relative
         to the windows. For example, if the actual labels are 1 and 12,
         and the window indices are [[1,2,3],[10,11,12]], the 'flat' indices 
         will be [0,5]. Useful for concatenating and predicting
+
+        Args:
+            labelSlice: if not none, slices into the labels, giving which ones
+            we want
         """
         lab = self.Labels
+        if (labelSlice is not None):
+            lab = lab[labelSlice]
         idxByWindows = self.HiResData.GetWindowIdx()
         timeByWindows = self.HiResData.time
         # flattrn the window indices

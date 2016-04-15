@@ -56,7 +56,13 @@ class Learner(object):
         """
         # get the actual labels
         truth = self.FeatureMask.LabelsForAllPoints
-        return EvaluationObject(truth,Predictions)
+        return Evaluate_Predictions(self,Truth,Predictions)
+    def Evaluate_Predictions(self,Truth,Predictions):
+        """
+        Args:
+            Truth,Predicitons: see Evaluate
+        """
+        return EvaluationObject(Truth,Predictions)        
     @property
     def LabelsForAllPoints(self):
         """

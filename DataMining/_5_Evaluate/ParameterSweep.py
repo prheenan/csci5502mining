@@ -8,25 +8,73 @@ import sys
 DEF_CONST = [3,5,8,9,10,11,12,13,16,17,18,19,20,22,25,27,30,35,45,50,\
              75,100,200]
 
+from sklearn.cross_validation import KFold
 import PyUtil.PlotUtilities as pPlotUtil
 from DataMining._3_ConvertToFeatures.FeatureGenerator import FeatureMask
 
-def GetEvaluation(obj,Labels,LearnerToUse,filteringConst=DEF_CONST):
+class CrossVal:
+    """
+    Class for keeping track of cross validation scores
+    """
+    def __init__(self,TrainingScores,TestScores):
+        self.TrainingScores = TrainingScores
+        self.TestScores = TestScores
+
+def GetFittedObj(LearnerToUse,obj,Labels,**kwargs):
+    # create the learner
+    mask = FeatureMask(obj,Labels,**kwargs)
+    mLearner = LearnerToUse(mask)
+    return mLearner
+
+def Predict(mLearner,Objects):
+    predictIdx = mLearner.Predict(Objects)
+    predEval = mLearner.Evaluate(predictIdx)
+    print("{:d}\t{:.4f}\t{:.4f}\t{:.4f}".format(
+        const,predEval.f_score,predEval.precision,predEval.recall))
+    return predEval
+
+def GetEvaluation(obj,Labels,LearnerToUse,filteringConst=DEF_CONST,
+                  FoldObj=None):
     """
 
     """
-    # Compute the Canny filter for two values of sigma
-    toRet = []
+    if (FoldObj is None):
+        # use 75-25 split, so 3 samples is 2-1
+        n = len(obj)
+        nFolds = max(2,int(n * 0.75))
+        FoldObj = KFold(n, n_folds=nFolds,random_state=42,shuffle=True)
+    trainingScores = []
+    testScores = [] 
     print("FilterN\tF_Sco\tPreci.\tRecall")
     for const in filteringConst:
-        mask = FeatureMask(obj,Labels,FilterConst=const)
-        # create the learner
-        mLearner = LearnerToUse(mask)
-        predictIdx = mLearner.FitAndPredict()
-        predEval = mLearner.Evaluate(predictIdx)
-        print("{:d}\t{:.4f}\t{:.4f}\t{:.4f}".format(
-            const,predEval.f_score,predEval.precision,predEval.recall))
-        toRet.append(predEval)
+        # set up new training and testing ...
+        trainV = []
+        testV = []
+        for train,test in FoldObj:
+            atIndex = lambda x,idx: [x[i] for i in idx]
+            # get the training set
+            trainingSet = atIndex(obj,train)
+            trainingLabels = atIndex(Labels,train)
+            # get the test set
+            testSet = atIndex(obj,test)
+            testLabels = atIndex(Labels,test)
+            print("Training...")
+            trainObj = GetFittedObj(LearnerToUse,trainingSet,trainingLabels)
+            # get the score for the training set
+            trainPred = Predict(trainObj,trainingLabels)
+            trainEval = trainObj.Evaluate_Predictions(trainingLabels,
+                                                      trainPred)
+
+            # get the predictions for the test set
+            testPredictions = trainObj.Predict(testSet)
+            # get the score
+            print("Testing...")
+            testEval =trainObj.Evaluate_Predictions(testLabels,testPredictions)
+            # record the scores
+            trainV.append(trainEval)
+            testV.append(testEval)
+        trainingScores.append(trainV)
+        testScores.append(testV)
     return toRet
 
 def MakeEvalutionPlot(evalObj,outName,filteringConst=DEF_CONST):

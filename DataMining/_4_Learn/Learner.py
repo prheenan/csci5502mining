@@ -57,6 +57,8 @@ class Learner(object):
         # get the actual labels
         truth = self.FeatureMask.LabelsForAllPoints
         return Evaluate_Predictions(self,Truth,Predictions)
+    def ObjToMask(self,Obj,Labels):
+        return FeatureMask(Obj,Labels)
     def Evaluate_Predictions(self,Truth,Predictions):
         """
         Args:

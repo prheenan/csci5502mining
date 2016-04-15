@@ -27,25 +27,25 @@ class NeuralLearner(Learner.Learner):
     def setupInputActivations(self, FeatureMask):
         inputActivations = []
         labelCounter = 0
-        for SepStd, SepMinMax, ForceStd, ForceMinMax in zip(FeatureMask.SepStd,
-                                                            FeatureMask.SepMinMax,
-                                                            FeatureMask.ForceStd,
-                                                            FeatureMask.ForceMinMax):
-            inputActivations.append((([SepStd, SepMinMax, ForceStd, ForceMinMax]), self.LabelsForAllPoints[labelCounter]))
+        for ForceStd, ForceMinMax, CannyFilter in zip(FeatureMask.ForceStd,
+                                                      FeatureMask.ForceMinMax,
+                                                      FeatureMask.CannyFilter):
+            inputActivations.append((([ForceStd, ForceMinMax, CannyFilter]), self.LabelsForAllPoints[labelCounter]))
             labelCounter += 1
         return inputActivations
 
     def FitAndPredict(self):
         net = NeuralNetwork(self.inputActivations)
 	net.makeNetwork(
-                        4,  # input size
+                        3,  # input size
                         10, # hidden size
                         2   # output size
                        )
-	if raw_input("Should I load weights? (y/n) ") == "y":
-		print "loading weights...\n"
-		net.loadWeights()
-	else:
+	#if raw_input("Should I load weights? (y/n) ") == "y":
+	print "loading weights...\n"
+    	net.loadWeights()
+        '''
+        else:
 		print "initializing random weights...\n"
 		net.initializeRandomWeights()
         if raw_input("Should I test or train? " ) == "train":
@@ -56,13 +56,45 @@ class NeuralLearner(Learner.Learner):
                             net.train()
                     except KeyboardInterrupt:
                             break
-            print "Error for latest epoch: ", net.epochError
-            print "Epochs to convergence:",   net.epochs
+            #print "Error for latest epoch: ", net.epochError
+            #print "Epochs to convergence:",   net.epochs
             net.saveWeights()
             print "weights saved\n"
-            return net.test()
+        '''
+        return net.test()
+        '''
         else:
             return net.test()
+        '''
+    
+    def Fit(self, mask): 
+        self.inputActivations = self.setupInputActivations(mask)
+	net = NeuralNetwork(self.inputActivations)
+        net.makeNetwork(
+                        3,  # input size
+                        10, # hidden size
+                        2   # output size
+                       )
+        net.initializeRandomWeights()
+        for i in range(1):
+            try:
+                net.train()
+            except KeyboardInterrupt:
+                print("Training cancelled.")
+                break
+        net.saveWeights()
+        print("weights saved\n")
+
+    def Predict(self,mask):
+        self.inputActivations = self.setupInputActivations(mask)
+        net = NeuralNetwork(self.inputActivations)
+        net.makeNetwork(
+                        3,  # input size
+                        10, # hidden size
+                        2   # output size
+                       )
+        net.loadWeights()
+        return net.test()
 
 class Neuron():
 	def __init__(self):
@@ -110,7 +142,7 @@ class NeuralNetwork():
 
 	def getLabel(self,node):
 		if node == self.outputLayer[0]:
-			print "event detected!"
+			#print "event detected!"
                         return 1
 		elif node == self.outputLayer[1]:
 			return 0
@@ -128,11 +160,11 @@ class NeuralNetwork():
 				return 0
 
 	def trainingEpoch(self):
-                print "Trial: " + str(self.trial)
+                #print "Trial: " + str(self.trial)
 		step = 0
                 for timeStep in self.inputActivations:
-                        if step % 10000 == 0:
-                                print "Timestep:", step
+                        #if step % 10000 == 0:
+                                #print "Timestep:", step
 			output = self.minusPhase(timeStep)
 			if self.plusPhase(timeStep,output) == False:
 				self.epochError += 1
@@ -160,7 +192,7 @@ class NeuralNetwork():
 	def checkMinusPhaseOutput(self,timeStep,minusPhaseOutput):
 		label = self.getLabel(minusPhaseOutput[0])
 		correct = False
-                if timeStep[1] == 1: print "event present..."
+                #if timeStep[1] == 1: print "event present..."
 		if timeStep[1] == label:
 			correct = True
 		return correct, label
@@ -216,8 +248,9 @@ class NeuralNetwork():
 				output_node.hiddenConnections.append(randomWeight)
 
 	def loadWeights(self):
-		file_ = raw_input("Enter name of weights file: ")
-		file_ = open("_4_Learn/"+file_+".data","r")
+		#file_ = raw_input("Enter name of weights file: ")
+		file_ = "canny"
+                file_ = open("_4_Learn/"+file_+".data","r")
 		weights = []
 		for weight in file_:
 			weights.append(float(weight))
@@ -242,25 +275,27 @@ class NeuralNetwork():
                 self.trainingEpoch()
                 self.epochs += 1
                 error = float(self.epochError) / float(len(self.inputActivations))
-                print "Epoch:", self.epochs, "Count Error:", self.epochError, "Percentage Error:", error
+                #print "Epoch:", self.epochs, "Count Error:", self.epochError, "Percentage Error:", error
 
         def test(self):
             labels = []
             step = 0
             testerr = 0
             for timeStep in self.inputActivations:
-                if step % 10000 == 0:
-                    print "Timestep:", step
+                #if step % 10000 == 0:
+                    #print "Timestep:", step
                 output = self.minusPhase(timeStep)
                 if self.plusPhase(timeStep,output) == False:
                     testerr += 1
                 labels.append(self.getLabel(output[0]))
                 step += 1
-            print "Test Count Error:", testerr
+            #print "Test Count Error:", testerr
+            self.saveWeights()
             return labels
 
 	def saveWeights(self):
-                weights = open("_4_Learn/"+raw_input("Enter name for weights: ")+".data","w")
+                #weights = open("_4_Learn/"+raw_input("Enter name for weights: ")+".data","w")
+                weights = open("_4_Learn/canny.data","w")
 		for node in self.inputLayer:
 			for connection in node.hiddenConnections:
 				weights.write(str(connection))

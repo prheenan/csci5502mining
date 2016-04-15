@@ -23,12 +23,20 @@ class KmeansLearner(Learner.Learner):
         super(KmeansLearner, self).__init__(FeatureMask)
         self.opts = opts
         # construct the features kmeans will use
-        self.arr = np.reshape(FeatureMask.CannyFilter,
-                              (self.N,1))
+        self.arr = self.MaskToMatrix(FeatureMask)
+        self.toFit = None
+    def MaskToMatrix(self,mask):
+        N = mask.N
+        return np.reshape(mask.CannyFilter,
+                          (N,1))
     def FitAndPredict(self):
-        optionDict = self.opts.__dict__
-        toFit = KMeans(**optionDict)
         return toFit.fit_predict(self.arr)
+    def Predict(self,Mask):
+        return self.toFit.predict(self.MaskToMatrix(Mask))
+    def Fit(self,Mask):
+        optionDict = self.opts.__dict__
+        self.toFit = KMeans(**optionDict)
+        return self.toFit.fit(self.MaskToMatrix(Mask))
     def Evaluate(self,predIdx):
         """
         overwrite inherited Evaluate, since we dont know our labels.

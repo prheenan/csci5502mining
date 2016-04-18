@@ -11,7 +11,7 @@ from scipy.stats import norm
 from FeatureLib.step_detect import step_detect
 from PyUtil.GenUtilities import digitize
 
-from hmmlearn import hmm
+#from hmmlearn import hmm
 from scipy.stats import linregress
 
 def GetFilterConst(time,Multiplier):
@@ -126,7 +126,10 @@ def CannyFilter(time,sep,force,Meta,tauMultiple=25,**kwargs):
                                high_threshold=(1-sigma/n),use_quantiles=True)
         # get where the algorithm thinks a transtition is happenening
         idx = np.where(edges1 == True)[0]
-        return WalkEventIdx(force,idx)
+        idx = WalkEventIdx(force,idx)
+        # make all 0s to -1s
+        idx[np.where(idx) < 0.5] = -1
+        return idx
 
 def MinMaxNorm(y):
         minV = np.min(y)

@@ -5,9 +5,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-DEF_CONST = [3,5,8,9,10,11,12,13,16,17,18,19,20,22,25,27,30,35,45,50,\
-             75,100,200]
+DEF_CONST_FULL = [3,5,8,9,10,11,12,13,16,17,18,19,20,22,25,27,30,35,45,50,\
+                  75,100,200]
 
+DEF_CONST = [15,18,19,20,22,25,27,30,35,45,50,75]
 from sklearn.cross_validation import KFold
 import PyUtil.PlotUtilities as pPlotUtil
 from DataMining._3_ConvertToFeatures.FeatureGenerator import FeatureMask

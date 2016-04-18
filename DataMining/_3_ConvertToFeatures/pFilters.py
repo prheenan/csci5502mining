@@ -128,7 +128,7 @@ def CannyFilter(time,sep,force,Meta,tauMultiple=25,**kwargs):
         idx = np.where(edges1 == True)[0]
         idx = WalkEventIdx(force,idx)
         # make all 0s to -1s
-        idx[np.where(idx) < 0.5] = -1
+        idx[np.where(idx < 0.5)] = -1
         return idx
 
 def MinMaxNorm(y):

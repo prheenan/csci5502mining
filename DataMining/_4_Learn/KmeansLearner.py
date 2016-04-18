@@ -29,8 +29,6 @@ class KmeansLearner(Learner.Learner):
         N = mask.N
         return np.reshape(mask.CannyFilter,
                           (N,1))
-    def FitAndPredict(self):
-        return toFit.fit_predict(self.arr)
     def Predict(self,Mask):
         return self.toFit.predict(self.MaskToMatrix(Mask))
     def Fit(self,Mask):

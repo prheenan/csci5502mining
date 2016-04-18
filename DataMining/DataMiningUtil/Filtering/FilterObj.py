@@ -64,13 +64,19 @@ class Filter:
             See FilterDataY
         """
         return FilterDataY(timeY,DataY,self.timeFilter)
-    def GetApproachAndRetractTouchoffTimes(self,TimeSepForceObj):
+    def GetApproachAndRetractTouchoffTimes(self,TimeSepForceObj,
+                                           rawMedianAppr=None,
+                                           rawMedianRetr=None):
         """
         Given a TimeSepForceObj object (ie: low or high res), 
         gets the (approximate) approach and retract touchoff times, 
 
         Args:
             DataObj:TimeSepForceObj instance, with time separation and force
+            rawMedianAppr: threshhold for the dwell to start. If none, defaults
+            to medians of the dwell
+            rawMedianRetr: threshhold for the dwell to end, If None, 
+            defaults to the median of the dwell
         Returns: 
             TouchOffObj instance
         """
@@ -90,7 +96,8 @@ class Filter:
         endIdx = startIdx+(halfwayIdx-startIdx)*2
         # get the median of the (raw) derivative in the dwell region
         forceDwell = rawY[startIdx:endIdx]
-        rawMedian = np.median(forceDwell)
+        if (rawMedianAppr == None):
+            rawMedianAppr = np.median(forceDwell)
         regionApproach,regionRetract = \
                 GetApproxTouchoffRegions(TimeSepForceObj,self.surfaceThickness)
         apprRegion = rawY[regionApproach]
@@ -101,17 +108,19 @@ class Filter:
         # the median
         approachIdx = GetWhereCompares(time[regionApproach],
                                        apprRegion,timeConst,
-                                       rawMedian,True)[0] + apprOffset
+                                       rawMedianAppr,True)[0] + apprOffset
+        if (rawMedianRetr == None):
+            rawMedianRetr = min(rawY[approachIdx],rawMedianAppr)
         # the retract index is the *last* time (-1) we are above (>=, True)
         # the median
         retrIdx= GetWhereCompares(time[regionRetract],
                                   retrRegion,timeConst,
-                                  rawMedian,True)[-1] + retrOffset
+                                  rawMedianRetr,True)[-1] + retrOffset
         return TouchOffObj(time[approachIdx],approachIdx,time[retrIdx],retrIdx,
                            halfwayTime,halfwayIdx)
 
 
-def FilterDataY(timeY,DataY,timeFilter):
+def FilterDataY(timeY,DataY,timeFilter,MaxNPoints=20000):
     """
     Given a set of times (assumed uniformly increasing)
     for dataY, filters the data
@@ -123,7 +132,11 @@ def FilterDataY(timeY,DataY,timeFilter):
         filtered Y values
     """
     deltaTForY = timeY[1] - timeY[0]
-    n = min(DataY.size-1,int(np.ceil(timeFilter/deltaTForY)))
+    nPointsByDelta = int(np.ceil(timeFilter/deltaTForY))
+    # cant filter more data points  than our actual data
+    n = min(DataY.size-1,nPointsByDelta)
+    # have some maximum threshhold.
+    n = min(n,MaxNPoints)
     return IgorUtil.savitskyFilter(DataY,nSmooth=n,degree=2)
 
 def GetWhereCompares(time,regionData,timeFilter,threshold,gt):
@@ -141,30 +154,39 @@ def GetWhereCompares(time,regionData,timeFilter,threshold,gt):
     regionFiltered = FilterDataY(time,regionData,timeFilter=timeFilter)
     # want two conditions: on the derivatve and the aboslute value
     # condAboveMed will contain the condition on the abolute value
-    condAboveMed = (regionFiltered >= threshold)
-    tol = max(5,int(time.size/100))
-    # if our threshhold was bad (e.g. ringing on the dwell),
-    #we can ust ask for the median of the entire filtered region
-    if (np.sum(condAboveMed) < tol):
-        threshold = np.median(regionFiltered)
-        condAboveMed = (regionFiltered >= threshold)
-    # get the gradient
+    condition = (regionFiltered >= threshold)
+    n = regionFiltered.size
+    tol = int(np.ceil(n/20))
     deriv = FilterDataY(time,np.gradient(regionFiltered),
                         timeFilter=timeFilter)
+    if (np.sum(condition) <= tol):
+        pct80 = np.percentile(regionFiltered,80)
+        condAboveMed = (regionFiltered >= threshold)
+        derivCond = (deriv <= 0) 
+        condition = condAboveMed & derivCond
+        if (np.sum(condition) <= tol):
+            condition = condAboveMed
+        if (np.sum(condition) <= tol):
+            condition = derivCond    
     # for gt, we want where the derivative and the valus are large (ish)
     # ls, oppotie
     if (gt):
-        idx = np.where((deriv >= 0) & (condAboveMed))[0]
+        idx = np.where(condition)[0]
     else:
         # note: '~' is pythons binary not (like ! in cs). Matlab-like, ick.
-        idx = np.where((deriv < 0) & (~condAboveMed))[0]
-    # may need to 'backoff' one of the measurements. try using the derivative
-    # first, then the actual threshhold
-    if (idx.size == 0):
-        idx = (np.where(deriv >= 0) if gt else np.where(deriv <= 0))[0]
-        # if the derivative is screwed up, all we can do is the absolute value
-        if (idx.size < tol):
-            idx = (np.where(condAboveMed) if gt else np.where(~condAboveMed))[0]
+        idx = np.where(condition)[0]
+    """
+    plt.figure()
+    plt.subplot(2,1,1)
+    plt.plot(regionData)
+    plt.plot(regionFiltered)
+    plt.plot(idx,regionData[idx],'.')
+    plt.axhline(threshold,color='r',linestyle='--',linewidth=2.0)
+    plt.subplot(2,1,2)
+    plt.plot(deriv)
+    plt.axhline(0,color='r',linestyle="--")
+    plt.show()
+    """
     return idx
 
     

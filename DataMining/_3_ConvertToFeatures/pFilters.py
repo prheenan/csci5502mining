@@ -9,8 +9,10 @@ from scipy import ndimage as ndi
 from skimage import feature
 from scipy.stats import norm
 from FeatureLib.step_detect import step_detect
+from PyUtil.GenUtilities import digitize
 
 from hmmlearn import hmm
+from scipy.stats import linregress
 
 def GetFilterConst(time,Multiplier):
         """
@@ -35,6 +37,69 @@ def FilterToTau(time,multiplier,y):
         """
         tau = GetFilterConst(time,multiplier)
         return FilterObj.FilterDataY(time,y,tau)
+
+def StateValueByMedian(Force,Starts,Ends):
+    # get the 'state values' of all the stats
+    return [np.median(Force[start:end]) \
+            for start,end in zip(Starts,Ends)]
+
+def StateValueByLinearFit(Force,Starts,Ends):
+    x = np.arange(start=0,stop=Force.size,step=1)
+    toRet = []
+    for start,end in zip(Starts,Ends):
+        xTmp = x[start:end]
+        forceTmp = Force[start:end]
+        # fit a line to this region
+        slope,intercept,_,_,_ = linregress(xTmp-xTmp[0],forceTmp)
+        # get the actual change
+        deltaX = xTmp[1]-xTmp[0]
+        # get the y value we would see at 'end', according to the fit
+        fitYEnd = intercept + slope * deltaX
+        toRet.append(fitYEnd)
+    return toRet
+    
+def WalkEventIdx(force,idx):
+    """
+    Utility function. Given indices at which an event are happening, 'walks' 
+    backwards and forwards to the event boundaries, setting everything to 
+    one in between
+
+    Args:
+        force: the actual data; we consider the median between two events
+        to be the 'stable' value for that state
+     
+        idx: indices into force at which we have a transition
+
+    Returns:
+        binary 0/1 array for all the data
+    """
+    # we will return 0/1 for all points
+    n = force.size
+    toRet = np.zeros(n)
+    # we need to figure out where the event boundaries are,
+    # so we continue to the 'left' and 'right' (in time)
+    # from an event, until reaching the medians
+    # start[i] and end[i]
+    # will be the region boundaries before event [i]
+    # (so start[i+1] and end[i+1] are the boundaries for event i+1)
+    starts = [0] + list(idx)
+    ends = list(idx) + [-1]
+    meds = StateValueByMedian(force,starts,ends)
+    # now we (probably) need to update the indices we are returning
+    # idxArr will let us mask to the region we are about, relative to
+    # our event
+    idxArr = np.arange(n)
+    for eventNum,i in enumerate(idx):
+            # get the median 'Low' and 'hi' (before and after, respectively)
+            medLow = meds[eventNum]
+            medHi = meds[eventNum+1]
+            # last time ([-1]) we are below med, before i
+            set1 = np.where( (force <= medLow) & (idxArr < i))[0][-1]
+            # first time ([0]) we are above med, after i
+            set2 = np.where( (force >= medHi) & (idxArr > i))[0][0]
+            toRet[set1:set2] = 1
+    return toRet
+
 
 def CannyFilter(time,sep,force,Meta,tauMultiple=25,**kwargs):
         """
@@ -61,47 +126,26 @@ def CannyFilter(time,sep,force,Meta,tauMultiple=25,**kwargs):
                                high_threshold=(1-sigma/n),use_quantiles=True)
         # get where the algorithm thinks a transtition is happenening
         idx = np.where(edges1 == True)[0]
-        # we will return 0/1 for all points
-        toRet = np.zeros(n)
-        # we need to figure out where the event boundaries are,
-        # so we continue to the 'left' and 'right' (in time)
-        # from an event, until reaching the medians
-        # start[i] and end[i]
-        # will be the region boundaries before event [i]
-        # (so start[i+1] and end[i+1] are the boundaries for event i+1)
-        starts = [0] + list(idx)
-        ends = list(idx) + [-1]
-        # get the medians in all our winndows
-        meds = [np.median(force[start:end]) \
-                for start,end in zip(starts,ends)]
-        # now we (probably) need to update the indices we are returning
-        # idxArr will let us mask to the region we are about, relative to
-        # our event
-        idxArr = np.arange(n)
-        for eventNum,i in enumerate(idx):
-                # get the median 'Low' and 'hi' (before and after, respectively)
-                medLow = meds[eventNum]
-                medHi = meds[eventNum+1]
-                # last time ([-1]) we are below med, before i
-                set1 = np.where( (force <= medLow) & (idxArr < i))[0][-1]
-                # first time ([0]) we are above med, after i
-                set2 = np.where( (force >= medHi) & (idxArr > i))[0][0]
-                toRet[set1:set2] = 1
-        where1 = np.where(toRet == 1)[0]
-        return toRet
+        return WalkEventIdx(force,idx)
 
 def MinMaxNorm(y):
         minV = np.min(y)
         maxV = np.max(y)
         return (y - minV)/(maxV-minV)
 
-def HmmFilter(time,step,force,Meta,tauMultiple=25,n_iter=100,n_states=3,
-        **kwargs):
-        filterData = FilterToTau(time,tauMultiple,force)
-        model = hmm.GaussianHMM(n_components=n_states, covariance_type="full",
+def HmmFilter(time,step,force,Meta,tauMultiple=25,n_iter=200,n_states=2,
+              nBins = 50,**kwargs):
+        filterForce = FilterToTau(time,tauMultiple,force)
+        filterData = filterForce
+        binarized = digitize(filterData,nBins)
+        toFit = np.column_stack([binarized])
+        model = hmm.GaussianHMM(n_components=n_states, covariance_type="diag",
                                 n_iter=n_iter)
-        model.fit( [filterData])
-        return model.predict(filterData)
+        model.fit([toFit])
+        statePredictions = model.predict(toFit)
+        whereSwitchIdx = np.where(np.diff(statePredictions) > 0.5)[0]
+        return WalkEventIdx(filterForce,whereSwitchIdx)
+
 
 def ForwardWaveletTx(time,sep,force,Meta,tauMultiple=25,nWaveletIters=10,
                      **kwargs):
@@ -109,7 +153,9 @@ def ForwardWaveletTx(time,sep,force,Meta,tauMultiple=25,nWaveletIters=10,
         detected = step_detect.mz_fwt(filterData, n=nWaveletIters)
         filtered = np.abs(FilterToTau(time,tauMultiple,
                                       detected - np.median(detected)))
-        return filtered/max(filtered)
+        minV = min(filtered)
+        maxV = max(filtered)
+        return (filtered-minV)/(maxV-minV)
 
 def ForceFiltered(time,sep,force,Meta,tauMultiple=25,**kwargs):
         """

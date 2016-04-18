@@ -59,12 +59,35 @@ class Learner(object):
         return Evaluate_Predictions(self,Truth,Predictions)
     def ObjToMask(self,Obj,Labels):
         return FeatureMask(Obj,Labels)
-    def Evaluate_Predictions(self,Truth,Predictions):
+    def Evaluate_Predictions(self,Truth,predIdx):
         """
+        Overwrite inherited Evaluate, since we dont know our labels.
+        Choose whichever has the lowest number of points as '1'
+
         Args:
-            Truth,Predicitons: see Evaluate
+            Truth,predIdx: see Evaluate
         """
-        return EvaluationObject(Truth,Predictions)        
+        """
+        mSet = set(predIdx)
+        # if for some reason we missed all the events, say so
+        if (len(mSet) == 1):
+            use = np.zeros(Truth.size)
+            return EvaluationObject(Truth,use)
+        ele1 = mSet.pop()
+        ele2 = mSet.pop()
+        mList = list(predIdx)
+        # zeros should always have more elements...
+        if (mList.count(ele1) > mList.count(ele2)):
+            whereZero = [np.where(predIdx==ele1)]
+            whereOne = [np.where(predIdx==ele2)]
+        else:
+            whereZero = [np.where(predIdx==ele2)]
+            whereOne = [np.where(predIdx==ele1)]
+        use = predIdx.copy()
+        use[whereZero] = 0
+        use[whereOne] = 1
+        """
+        return EvaluationObject(Truth,predIdx)        
     @property
     def LabelsForAllPoints(self):
         """
@@ -84,12 +107,15 @@ class Learner(object):
         """
         return self.FeatureMask.IdxWhereEvent
     @abstractmethod
-    def FitAndPredict(self):
+    def Fit(self,Mask):
         """
-        Abstract Method with fits the data it was given, and returns its 
-        prediction
-
-        Returns:
-            0/1 binary 'is an event happening' prediction
+        Abstract Method with fits the data it was given, using the mask
+        """
+        pass
+    @abstractmethod
+    def Predict(self,Mask):
+        """
+        Abstract Method with predicts the data it was given, using the mask.
+        Relies on previous fit
         """
         pass

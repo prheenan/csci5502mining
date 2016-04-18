@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import sys
 
 DEF_CONST = [3,5,8,9,10,11,12,13,16,17,18,19,20,22,25,27,30,35,45,50,\
-             75,100,200][:4]
+             75,100,200]
 
 from sklearn.cross_validation import KFold
 import PyUtil.PlotUtilities as pPlotUtil
@@ -36,6 +36,13 @@ class CrossVal:
 
 
 def GetFittedObj(LearnerToUse,obj,Labels,FilterConst):
+    """
+    Given a learner, objects, and filtering, gets the fitted learner
+
+    Args:
+        LearnerToUse,obj,Labels: see GetEvaluation
+        FilterConst: single filtering constant to use
+    """
     # create the learner
     mask = FeatureMask(obj,Labels,FilterConst=FilterConst)
     mLearner = LearnerToUse(mask)
@@ -45,7 +52,18 @@ def GetFittedObj(LearnerToUse,obj,Labels,FilterConst):
 def GetEvaluation(obj,Labels,LearnerToUse,FilterConst=DEF_CONST,
                   FoldObj=None):
     """
+    Gets the cross-validation scores on the data provided
+    
+    Args:
+        obj: PreProcessedObjects:
+        labels: List of labels, same same as obj
+        LearnerToUse: class to instatiate the learner, assume it follows same
+        construction as Learner
 
+        FilterConst: the filtering constant to use
+        FoldObj: the kfold object
+    Returns:
+        CrossVal, inclluding list of scores
     """
     if (len(obj) == 1):
         print("WARNING!")
@@ -99,9 +117,17 @@ def GetEvaluation(obj,Labels,LearnerToUse,FilterConst=DEF_CONST,
         testScores.append(testV)
     return CrossVal(trainingScores,testScores,FilterConst)
 
-def MakeEvalutionPlot(evalObj,outName,filteringConst=DEF_CONST):
+def MakeEvalutionPlot(evalObj,outName):
+    """
+    Given a cross validation object, makes a plot of the results
+
+    Args:
+        evalObj: output of GetEvaluation
+        outName: what to save the file as 
+    """
     fTraining,fTesting = evalObj.GetMeans()
     stdevTraining,stdevTesting = evalObj.GetStdevs()
+    filteringConst = evalObj.FilteringConst
     fig = pPlotUtil.figure()
     ax = plt.subplot(1,1,1)
     plt.errorbar(filteringConst,fTraining,stdevTraining,fmt="bo-",
@@ -112,3 +138,16 @@ def MakeEvalutionPlot(evalObj,outName,filteringConst=DEF_CONST):
     ax.set_xscale('log')
     plt.ylim([0,1])
     pPlotUtil.savefig(fig,outName)
+
+def PlotMask(mask,feature1,feature2):
+    """
+    For deugging. given  mask and two features, plot the split
+    """
+    plt.figure()
+    eventIdx = mask.IdxWhereEvent
+    N = mask.N
+    nonEventIdx = np.array(list(set(list(np.arange(N,dtype=np.int64))) - \
+                                set(eventIdx))).astype(np.int64)
+    plt.plot(feature1[eventIdx],feature2[eventIdx],'ro')
+    plt.plot(feature1[nonEventIdx],feature2[nonEventIdx],'bx')
+    plt.show()

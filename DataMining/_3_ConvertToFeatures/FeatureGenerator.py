@@ -1,7 +1,8 @@
 # force floating point division. Can still use integer with //
 from __future__  import division
 from FeatureUtils import *
-from pFilters import pFeatureGen,ZScoreByDwell,ForceFiltered,CannyFilter
+from pFilters import pFeatureGen,ZScoreByDwell,ForceFiltered,CannyFilter,\
+    ForwardWaveletTx
 
 
 def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions,*args,**kwargs):
@@ -26,25 +27,22 @@ def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions,*args,**kwargs):
 class FeatureMask:
 
     def __init__(self,PreProcessedObjects,Labels,FilterConst=400):
-        myFuncs = [ lambda obj: featureGen(obj,'separation','std',FilterConst),
-                    lambda obj: featureGen(obj,'separation','minmax',
-                                           FilterConst),
-                    lambda obj: featureGen(obj,'force','std',FilterConst),
+        myFuncs = [ lambda obj: featureGen(obj,'force','std',FilterConst),
                     lambda obj: featureGen(obj,'force','minmax',FilterConst),
                     lambda obj: pFeatureGen(obj,CannyFilter,FilterConst),
+                    lambda obj: pFeatureGen(obj,ForwardWaveletTx,FilterConst),
                     lambda obj: pFeatureGen(obj,ZScoreByDwell,FilterConst)
                     ]
         matrix = GetFeatureMatrix(PreProcessedObjects,myFuncs,FilterConst)
         flattenedByFeatures = [np.concatenate(objectV) for objectV in matrix]
         # Matrix: rows are the feature, columns are the (concatenated 
         Matrix = np.array(flattenedByFeatures)
-        self.SepStd = Matrix[0,:]
-        self.SepMinMax = Matrix[1,:]
-        self.ForceStd = Matrix[2,:]
-        self.ForceMinMax = Matrix[3,:]
-        self.CannyFilter = Matrix[4,:]
-        self.ZScoreByDwell = Matrix[5,:]
-        self.N = self.SepStd.size
+        self.ForceStd = Matrix[0,:]
+        self.ForceMinMax = Matrix[1,:]
+        self.CannyFilter = Matrix[2,:]
+        self.Forward_Wavelet = Matrix[3,:]
+        self.ForceDwellNormed = Matrix[4,:]
+        self.N = self.ForceStd.size
         # save out label information
         # raw labels is just a copy of all the labels.
         self._LabelsRaw = Labels

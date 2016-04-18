@@ -27,16 +27,20 @@ def run():
     limit = None
     start=0
     for i,(sourceFile,label) in enumerate(zip(source[start:],labels[start:])):
-        print(label)
         if (i == limit):
             break
         fullPath = DataDir + sourceFile
         outPath = "./out/" + sourceFile + "/"
         # make sure we have a separate directory for each source.
-        mDir = pGenUtil.ensureDirExists(outPath)
-        proc = GetOrCreatedPreProcessed(DataDir,sourceFile,mDir,opt,label,
-                                        ForceUpdate=False,UseLowOnly=False)
-        
+        try:
+            mDir = pGenUtil.ensureDirExists(outPath)
+            proc = GetOrCreatedPreProcessed(DataDir,sourceFile,mDir,opt,label,
+                                            ForceUpdate=False,UseLowOnly=False)
+        except IOError as e:
+            print(e)
+            print("Couldn't find file {:s}...".format(sourceFile))
+            
+            
 
 if __name__ == "__main__":
     run()

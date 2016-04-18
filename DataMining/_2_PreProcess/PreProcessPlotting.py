@@ -356,8 +356,8 @@ def PlotProfile(basename,inf,mProc,decimate):
     PlotAllWindows(inf,slices,basename + "Windowing",decimate)
 
 
-def PlotGivenWindows(filterV,time,sep,force,plotFunc,timeConst=1000,
-                     timeStr="ms",labels=None):
+def PlotGivenWindows(filterV,timeByWindow,sep,forceByWindow,plotFunc,
+                     timeConst=1000,timeStr="ms",labels=None):
     """
     Given windows and information on how to plot, plots the data and the
     filtered data.
@@ -374,7 +374,7 @@ def PlotGivenWindows(filterV,time,sep,force,plotFunc,timeConst=1000,
         is a tuple of (start,end) *relative* index into the event in this window
     """
     toPn = 1e12
-    for i,(time,force) in enumerate(zip(time,force)):
+    for i,(time,force) in enumerate(zip(timeByWindow,forceByWindow)):
         n = time.size
         plotFunc(i)
         tMap = lambda x: (x-min(time))*timeConst
@@ -428,7 +428,9 @@ def PlotWindowsPreProcessed(mProc,outFile):
         catTime = getByLabelledEvt(timeWindowHi)
         catForce   =getByLabelledEvt(forceWindowHi)
         catSep = getByLabelledEvt(sepWindowHi)
-        subplotLab = lambda x: plt.subplot(3,nWindows,2*nWindows+(x+1))
+        nWindowsLabelled = len(catTime)
+        subplotLab = lambda x: plt.subplot(3,nWindowsLabelled,
+                                           2*nWindowsLabelled+(x+1))
         # for this one only, go ahead and change the filtering time constant.
         # XXX should fix
         hiResFilter = copy.deepcopy(filtering)
@@ -436,7 +438,10 @@ def PlotWindowsPreProcessed(mProc,outFile):
         PlotGivenWindows(hiResFilter,catTime,None,catForce,
                          subplotLab,timeConst=1e6,timeStr=r"$\mu s$",
                          labels=labelsRel)
-    pPlotUtil.savefig(fig,outFile)
+    try:
+        pPlotUtil.savefig(fig,outFile)
+    except RuntimeError as e:
+        pPlotUtil.savefig(fig,outFile,tight=False)
     
 
 

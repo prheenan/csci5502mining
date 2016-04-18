@@ -257,7 +257,10 @@ def PreProcess(LowRes,HiRes,mFiltering):
     """
     # Get the low and high resolution indices for the touchoff
     touchoffObjLow = mFiltering.GetApproachAndRetractTouchoffTimes(LowRes)
-    touchoffObjHi =  mFiltering.GetApproachAndRetractTouchoffTimes(HiRes)
+    touchApprThresh = LowRes.force[touchoffObjLow.apprIdx]
+    touchRetrThresh = LowRes.force[touchoffObjLow.retrIdx]
+    touchoffObjHi =  mFiltering.\
+    GetApproachAndRetractTouchoffTimes(HiRes,touchApprThresh,touchRetrThresh)
     # Get the distributions for the *low* resolution, raw data stuff
     rawDist = GetDistributions(touchoffObjHi,HiRes)
     # Correct the hi resolution curve, using the slices we just made

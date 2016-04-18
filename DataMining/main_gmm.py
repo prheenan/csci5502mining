@@ -9,7 +9,7 @@ import sys
 baseDir = "../"
 sys.path.append(baseDir)
 import PyUtil.CheckpointUtilities as pCheckUtil
-from DataMining._4_Learn.KmeansLearner import KmeansLearner
+from DataMining._4_Learn.GaussianMixtureLearner import GaussianMixtureLearner
 from DataMining._5_Evaluate.ParameterSweep import GetEvaluation,\
     MakeEvalutionPlot
 from DataMiningUtil.Caching import PreProcessCacher as Cacher
@@ -18,11 +18,10 @@ def run(limit=5):
     outDir = "./DataCache/4_EvalSweeps/"
     # get where the raw data and pre-processed data are
     obj,Labels = Cacher.ReadProcessedFiles(baseDir,limit=limit)
-    evalObj = pCheckUtil.getCheckpoint(outDir + "eval_knn.pkl",
+    evalObj = pCheckUtil.getCheckpoint(outDir + "eval_GMM.pkl",
                                        GetEvaluation,True,
-                                       obj,Labels,KmeansLearner)
-    MakeEvalutionPlot(evalObj,outName=outDir + "knnPlot.png")
+                                       obj,Labels,GaussianMixtureLearner)
+    MakeEvalutionPlot(evalObj,outName=outDir + "GMMPlot.png")
 
-
-if __name__=="__main__":
+if __name__ == "__main__":
     run()

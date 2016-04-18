@@ -127,9 +127,8 @@ def CannyFilter(time,sep,force,Meta,tauMultiple=25,**kwargs):
         # get where the algorithm thinks a transtition is happenening
         idx = np.where(edges1 == True)[0]
         idx = WalkEventIdx(force,idx)
-        # make all 0s to -1s
-        idx[np.where(idx < 0.5)] = -1
-        return idx
+        # switch canny to be between -0.5 and 0.5 
+        return idx - 0.5
 
 def MinMaxNorm(y):
         minV = np.min(y)

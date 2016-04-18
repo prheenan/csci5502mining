@@ -117,7 +117,7 @@ class Learner(object):
         negative = mask.CannyFilter
         wavelet = mask.CannyFilter*mask.Forward_Wavelet*mask.ForceDwellNormed
         second = mask.CannyFilter*mask.ForceDwellNormed
-        return [wavelet,second]
+        return [wavelet]
     def DefaultFeatureMatrix(self,mask):
         return self.FeaturesToMatrix(self.PatricksFeatures(mask))
     @property

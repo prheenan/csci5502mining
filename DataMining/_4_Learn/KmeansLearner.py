@@ -26,15 +26,14 @@ class KmeansLearner(Learner.Learner):
         self.arr = self.MaskToMatrix(FeatureMask)
         self.toFit = None
     def MaskToMatrix(self,mask):
-        N = mask.N
-        return np.reshape(mask.CannyFilter,
-                          (N,1))
+        return self.FeaturesToMatrix([mask.CannyFilter])
     def Predict(self,Mask):
         return self.toFit.predict(self.MaskToMatrix(Mask))
     def Fit(self,Mask):
         optionDict = self.opts.__dict__
         self.toFit = KMeans(**optionDict)
-        return self.toFit.fit(self.MaskToMatrix(Mask))
+        features = self.MaskToMatrix(Mask)
+        return self.toFit.fit(features)
     def Evaluate(self,predIdx):
         """
         overwrite inherited Evaluate, since we dont know our labels.

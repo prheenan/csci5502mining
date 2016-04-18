@@ -8,6 +8,7 @@ import sys
 
 from abc import ABCMeta,abstractmethod
 import sklearn.metrics as scores
+from _5_Evaluate.ParameterSweep import PlotMask
 
 
 class EvaluationObject:
@@ -87,7 +88,36 @@ class Learner(object):
         use[whereZero] = 0
         use[whereOne] = 1
         """
-        return EvaluationObject(Truth,predIdx)        
+        return EvaluationObject(Truth,predIdx)
+    def FeaturesToMatrix(self,features):
+        """
+        Converts the given features into a NxF matrix, where F is the number of 
+        features
+
+        Args:
+            features: list of features, or numpy 2D matrix
+        Returns:
+            NxF matrix, where F is the number of features
+        """
+        F = len(features)
+        N = len(features[0])
+        return np.reshape(a=features,newshape=(N,F))
+    def PatricksFeatures(self,mask):
+        """
+        Returns Patricks special features, given a mask
+
+        Args:
+            mask: FeatureMask
+        Returns:
+            tuple of features
+        """
+        N = mask.N
+        # get the wavelet mask on the normalized dwell
+        # do the same for wavelets
+        wavelet = mask.CannyFilter*mask.Forward_Wavelet*mask.ForceDwellNormed
+        return [wavelet]
+    def DefaultFeatureMatrix(self,mask):
+        return self.FeaturesToMatrix(self.PatricksFeatures(mask))
     @property
     def LabelsForAllPoints(self):
         """

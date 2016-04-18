@@ -24,11 +24,7 @@ class SVM_Learner(Learner.Learner):
         self.arr = self.MaskToMatrix(FeatureMask)
         self.toFit = None
     def MaskToMatrix(self,mask):
-        N = mask.N
-        minMaxWave = mask.Forward_Wavelet
-        maskedForce = mask.CannyFilter 
-        return np.reshape((maskedForce),
-                          (N,1))
+        return self.DefaultFeatureMatrix(mask)
     def Predict(self,Mask):
         return self.toFit.predict(self.MaskToMatrix(Mask))
     def Fit(self,Mask):

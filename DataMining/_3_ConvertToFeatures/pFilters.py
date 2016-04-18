@@ -213,15 +213,7 @@ def ZScoreByDwell(time,sep,force,Meta,tauMultiple=25,**kwargs):
         prob[:tauMultiple] =min(prob)
         prob[-tauMultiple:] =min(prob)
         # make the probabilty a zero point
-        zerod = prob - np.abs(mObj.logsf(0))
-        #normalize / threshhold. Pixed so we can multiply the result by
-        # 100 to get the zscore, to high accuracy
-        maxz = 13.89
-        maxProb = np.abs(norm.logsf(maxz))
-        final = np.minimum(maxProb,zerod)/maxProb
-        # 'thresh' is the minimum zscore we want/100..
-        thresh = 0.01
-        final[np.where(final < thresh)] = 0
+        final = prob - np.abs(mObj.logsf(0))
         return final
 
 def pFeatureGen(obj,func,*args,**kwargs):

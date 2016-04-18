@@ -37,6 +37,7 @@ class FeatureMask:
         flattenedByFeatures = [np.concatenate(objectV) for objectV in matrix]
         # Matrix: rows are the feature, columns are the (concatenated 
         Matrix = np.array(flattenedByFeatures)
+        
         self.ForceStd = Matrix[0,:]
         self.ForceMinMax = Matrix[1,:]
         self.CannyFilter = Matrix[2,:]

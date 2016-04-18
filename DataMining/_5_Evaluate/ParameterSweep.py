@@ -21,12 +21,18 @@ class CrossVal:
         self.TestScores = TestScores
         self.FilteringConst = FilteringConst
     def GetMeans(self):
+        """
+        Returns: the means of the training / testing folds
+        """
         meanTrain = [np.mean([run.f_score for run in t])
                      for t in self.TrainingScores]
         meanTest  = [np.mean([run.f_score for run in t])
                      for t in self.TestScores]
         return meanTrain,meanTest
     def GetStdevs(self):
+        """
+        Returns: the standard deviations of the training / testing folds
+        """
         stdevTrain = [np.std([run.f_score for run in t])
                      for t in self.TrainingScores]
         stdevTest  = [np.std([run.f_score for run in t])
@@ -148,6 +154,13 @@ def PlotMask(mask,feature1,feature2):
     N = mask.N
     nonEventIdx = np.array(list(set(list(np.arange(N,dtype=np.int64))) - \
                                 set(eventIdx))).astype(np.int64)
+    plt.subplot(3,1,1)
+    plt.plot(mask.ForceDwellNormed,'b-')
+    plt.plot(eventIdx,mask.ForceDwellNormed[eventIdx],'r.')
+    plt.subplot(3,1,2)
+    plt.plot(eventIdx,feature2[eventIdx],'r.')
+    plt.plot(eventIdx,feature1[eventIdx],'k.')
+    plt.subplot(3,1,3)
     plt.plot(feature1[eventIdx],feature2[eventIdx],'ro')
-    plt.plot(feature1[nonEventIdx],feature2[nonEventIdx],'bx')
+    plt.plot(feature1[nonEventIdx],feature2[nonEventIdx],'b,')
     plt.show()

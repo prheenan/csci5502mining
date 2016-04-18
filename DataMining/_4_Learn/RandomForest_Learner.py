@@ -11,7 +11,7 @@ from _5_Evaluate.ParameterSweep import PlotMask
 import Learner
 
 class ForestOpt:
-    def __init__(self,max_depth=5, n_estimators=10, max_features=2,**kwargs):
+    def __init__(self,max_depth=5, n_estimators=10, max_features=1,**kwargs):
         # any other arguments, set dynamically
         self.max_depth=max_depth
         self.n_estimators=n_estimators
@@ -28,13 +28,10 @@ class RandomForest_Learner(Learner.Learner):
         self.arr = self.MaskToMatrix(FeatureMask)
         self.toFit = None
     def MaskToMatrix(self,mask):
-        N = mask.N
-        wavelet = np.abs( mask.Forward_Wavelet*mask.ForceDwellNormed)
-        maskedForce = np.abs( mask.CannyFilter * mask.ForceDwellNormed)
-        return np.reshape((wavelet,maskedForce),
-                          (N,2))
+        return self.DefaultFeatureMatrix(mask)
     def Predict(self,Mask):
-        return self.toFit.predict(self.MaskToMatrix(Mask))
+        idx =  self.toFit.predict(self.MaskToMatrix(Mask))
+        return idx
     def Fit(self,Mask):
         optionDict = self.opts.__dict__
         self.toFit = RandomForestClassifier(**optionDict)

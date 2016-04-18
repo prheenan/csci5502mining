@@ -16,7 +16,7 @@ from DataMiningUtil.Caching import PreProcessCacher as Cacher
 from DataMining._5_Evaluate.ParameterSweep import GetEvaluation,\
     MakeEvalutionPlot
 
-def run(limit=1):
+def run(limit=3):
     outDir = "./DataCache/4_EvalSweeps/"
     # get where the raw data and pre-processed data are
     obj,Labels = Cacher.ReadProcessedFiles(baseDir,limit=limit)

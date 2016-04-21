@@ -26,7 +26,7 @@ class KmeansLearner(Learner.Learner):
         self.arr = self.MaskToMatrix(FeatureMask)
         self.toFit = None
     def MaskToMatrix(self,mask):
-        return self.FeaturesToMatrix([mask.CannyFilter])
+        return self.FeaturesToMatrix([mask.Forward_Wavelet])
     def Predict(self,Mask):
         return self.toFit.predict(self.MaskToMatrix(Mask))
     def Fit(self,Mask):

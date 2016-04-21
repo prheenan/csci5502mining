@@ -8,7 +8,7 @@ import sys
 DEF_CONST_FULL = [3,5,8,9,10,11,12,13,16,17,18,19,20,22,25,27,30,35,45,50,\
                   75,100,200]
 
-DEF_CONST = [15,18,19,20,22,25,27,30,35,45,50,75]
+DEF_CONST = [10,15,20,25,35,40,45,55,60,70,75,85,100,115,130,150]
 from sklearn.cross_validation import KFold
 import PyUtil.PlotUtilities as pPlotUtil
 from DataMining._3_ConvertToFeatures.FeatureGenerator import FeatureMask
@@ -79,9 +79,9 @@ def GetEvaluation(obj,Labels,LearnerToUse,FilterConst=DEF_CONST,
         FoldObj = [ [[0],[0]] ]
     if (FoldObj is None):
         # use 5-fold validation, or however long if we are smaller.
-        n = min(5,len(obj))
+        n = len(obj)
         # use 75-25 split, so 3 samples is 2-1
-        nFolds = max(3,int(n * 0.75))
+        nFolds = min(10,n)
         # create the actual folding object.
         FoldObj = KFold(n, n_folds=nFolds,random_state=42,shuffle=True)
     trainingScores = []
@@ -93,7 +93,7 @@ def GetEvaluation(obj,Labels,LearnerToUse,FilterConst=DEF_CONST,
         trainV = []
         testV = []
         for train,test in FoldObj:
-            atIndex = lambda x,idx: [x[i] for i in idx]
+            atIndex = lambda x,idx: list([x[i] for i in idx])
             # get the training set
             trainingSet = atIndex(obj,train)
             trainingLabels = atIndex(Labels,train)
@@ -155,13 +155,17 @@ def PlotMask(mask,feature1,feature2):
     N = mask.N
     nonEventIdx = np.array(list(set(list(np.arange(N,dtype=np.int64))) - \
                                 set(eventIdx))).astype(np.int64)
-    plt.subplot(3,1,1)
+    plt.subplot(4,1,1)
+    plt.plot(mask.ForceStd,'b-')
+    plt.subplot(4,1,2)
     plt.plot(mask.ForceDwellNormed,'b-')
     plt.plot(eventIdx,mask.ForceDwellNormed[eventIdx],'r.')
-    plt.subplot(3,1,2)
+    plt.subplot(4,1,3)
+    plt.plot(feature2,'r-')
+    plt.plot(feature1,'k--')
     plt.plot(eventIdx,feature2[eventIdx],'r.')
     plt.plot(eventIdx,feature1[eventIdx],'k.')
-    plt.subplot(3,1,3)
+    plt.subplot(4,1,4)
     plt.plot(feature1[eventIdx],feature2[eventIdx],'ro')
     plt.plot(feature1[nonEventIdx],feature2[nonEventIdx],'b,')
     plt.show()

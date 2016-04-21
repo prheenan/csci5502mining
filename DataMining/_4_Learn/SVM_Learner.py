@@ -29,7 +29,9 @@ class SVM_Learner(Learner.Learner):
         return self.toFit.predict(self.MaskToMatrix(Mask))
     def Fit(self,Mask):
         optionDict = self.opts.__dict__
+        labels = self.MaskLabels(Mask)
+        features =self.MaskToMatrix(Mask)
         self.toFit = LinearSVC(**optionDict)
-        return self.toFit.fit(self.MaskToMatrix(Mask),
-                              Mask.LabelsForAllPoints)
+        return self.toFit.fit(features,
+                              labels)
         

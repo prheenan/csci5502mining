@@ -9,9 +9,12 @@ import sys
 from abc import ABCMeta,abstractmethod
 import sklearn.metrics as scores
 from _5_Evaluate.ParameterSweep import PlotMask
+from sklearn.metrics import  pairwise_distances_argmin_min
 
 
 class EvaluationObject:
+
+            
     def __init__(self,truth,predictions):
         """
         Creates an object with the various scores we want. 
@@ -31,6 +34,18 @@ class EvaluationObject:
             mScore = s(truth,predictions)
             # set the score as one of our fields
             setattr(self,lab,mScore)
+        # also set the distance metric: how far apart our ones are from actual
+        # ones
+        whereOnesActual = np.reshape(np.where(truth == 1)[0],(-1,1))
+        whereOnesPred = np.reshape(np.where(predictions == 1)[0],(-1,1))
+        if (whereOnesPred.size == 0):
+            return
+        # POST: at least something to go by...
+        _,distActualToPred= pairwise_distances_argmin_min(whereOnesActual,
+                                                          whereOnesPred)
+        mean = np.mean(distActualToPred)
+        median = np.median(distActualToPred)
+        maxV = np.max(distActualToPred)
             
     
 class Learner(object):
@@ -57,38 +72,15 @@ class Learner(object):
         """
         # get the actual labels
         truth = self.FeatureMask.LabelsForAllPoints
-        return Evaluate_Predictions(self,Truth,Predictions)
+        return self.Evaluate_Predictions(self,Truth,Predictions)
+    def Evaluate_Predictions(self,Truth,predIdx):
+        return Evaluate_Predictions(Truth,predIdx)
     def ObjToMask(self,Obj,Labels):
         return FeatureMask(Obj,Labels)
-    def Evaluate_Predictions(self,Truth,predIdx):
-        """
-        Overwrite inherited Evaluate, since we dont know our labels.
-        Choose whichever has the lowest number of points as '1'
-
-        Args:
-            Truth,predIdx: see Evaluate
-        """
-        """
-        mSet = set(predIdx)
-        # if for some reason we missed all the events, say so
-        if (len(mSet) == 1):
-            use = np.zeros(Truth.size)
-            return EvaluationObject(Truth,use)
-        ele1 = mSet.pop()
-        ele2 = mSet.pop()
-        mList = list(predIdx)
-        # zeros should always have more elements...
-        if (mList.count(ele1) > mList.count(ele2)):
-            whereZero = [np.where(predIdx==ele1)]
-            whereOne = [np.where(predIdx==ele2)]
-        else:
-            whereZero = [np.where(predIdx==ele2)]
-            whereOne = [np.where(predIdx==ele1)]
-        use = predIdx.copy()
-        use[whereZero] = 0
-        use[whereOne] = 1
-        """
-        return EvaluationObject(Truth,predIdx)
+    def MaskLabels(self,mask):
+        lab = mask.LabelsForAllPoints
+        labels = lab.ravel()
+        return labels
     def FeaturesToMatrix(self,features):
         """
         Converts the given features into a NxF matrix, where F is the number of 
@@ -101,7 +93,10 @@ class Learner(object):
         """
         F = len(features)
         N = len(features[0])
-        return np.reshape(a=features,newshape=(N,F))
+        mArr = np.zeros((N,F))
+        for i,f in enumerate(features):
+            mArr[:,i] = f
+        return mArr
     def PatricksFeatures(self,mask):
         """
         Returns Patricks special features, given a mask
@@ -111,15 +106,20 @@ class Learner(object):
         Returns:
             tuple of features
         """
-        N = mask.N
         # get the wavelet mask on the normalized dwell
         # do the same for wavelets
-        negative = mask.CannyFilter
-        wavelet = mask.CannyFilter*mask.Forward_Wavelet*mask.ForceDwellNormed
-        second = mask.CannyFilter*mask.ForceDwellNormed
-        return [wavelet]
+        absZ = mask.ForceDwellNormed
+        second = mask.ForceMinMax
+        # get the wavelet and meta information
+        wavelet= mask.Forward_Wavelet
+        canny = mask.CannyFilter+0.5
+        # make a 'radius'
+        radius = (canny*absZ/max(absZ))**2+(wavelet*second)**2
+        features = [canny,wavelet,radius,absZ,second]
+        return features
     def DefaultFeatureMatrix(self,mask):
-        return self.FeaturesToMatrix(self.PatricksFeatures(mask))
+        toRet =  self.FeaturesToMatrix(self.PatricksFeatures(mask))
+        return toRet
     @property
     def LabelsForAllPoints(self):
         """
@@ -151,3 +151,32 @@ class Learner(object):
         Relies on previous fit
         """
         pass
+
+
+def Evaluate_Predictions(Truth,predIdx):
+    """
+    Overwrite inherited Evaluate, since we dont know our labels.
+    Choose whichever has the lowest number of points as '1'
+    
+    Args:
+        Truth,predIdx: see Evaluate
+    """
+    mSet = set(predIdx)
+    # if for some reason we missed all the events, say so
+    if (len(mSet) == 1):
+        use = np.zeros(Truth.size)
+        return EvaluationObject(Truth,use)
+    ele1 = mSet.pop()
+    ele2 = mSet.pop()
+    mList = list(predIdx)
+    # zeros should always have more elements...
+    if (mList.count(ele1) > mList.count(ele2)):
+        whereZero = [np.where(predIdx==ele1)]
+        whereOne = [np.where(predIdx==ele2)]
+    else:
+        whereZero = [np.where(predIdx==ele2)]
+        whereOne = [np.where(predIdx==ele1)]
+    use = predIdx.copy()
+    use[whereZero] = 0
+    use[whereOne] = 1
+    return EvaluationObject(Truth,predIdx)

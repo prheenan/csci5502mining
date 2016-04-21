@@ -14,11 +14,11 @@ from DataMining._5_Evaluate.ParameterSweep import GetEvaluation,\
     MakeEvalutionPlot
 from DataMiningUtil.Caching import PreProcessCacher as Cacher
 
-def run(limit=1):
+def run(limit=3):
     outDir = "./DataCache/4_EvalSweeps/"
     # get where the raw data and pre-processed data are
     obj,Labels = Cacher.ReadProcessedFiles(baseDir,limit=limit)
-    evalObj = pCheckUtil.getCheckpoint(outDir + "svm_GMM.pkl",
+    evalObj = pCheckUtil.getCheckpoint(outDir + "svm.pkl",
                                        GetEvaluation,True,
                                        obj,Labels,SVM_Learner)
     MakeEvalutionPlot(evalObj,outName=outDir + "SVM_plot.png")

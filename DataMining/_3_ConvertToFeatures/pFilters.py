@@ -43,22 +43,42 @@ def StateValueByMedian(Force,Starts,Ends):
     return [np.median(Force[start:end]) \
             for start,end in zip(Starts,Ends)]
 
-def StateValueByLinearFit(Force,Starts,Ends):
+def StateValueByLinearFit(Force,Starts,Ends,fudge):
     x = np.arange(start=0,stop=Force.size,step=1)
-    toRet = []
+    starts = []
+    ends= []
     for start,end in zip(Starts,Ends):
-        xTmp = x[start:end]
-        forceTmp = Force[start:end]
+        sliceV = slice(start+fudge,end-fudge,1)
+        xTmp = x[sliceV]
+        forceTmp = Force[sliceV]
         # fit a line to this region
         slope,intercept,_,_,_ = linregress(xTmp-xTmp[0],forceTmp)
         # get the actual change
-        deltaX = xTmp[1]-xTmp[0]
+        deltaX = (end-start+1)
         # get the y value we would see at 'end', according to the fit
         fitYEnd = intercept + slope * deltaX
-        toRet.append(fitYEnd)
-    return toRet
-    
-def WalkEventIdx(force,idx):
+        # for y, need to walk back by a factor of the fudge factor
+        fitYStart = intercept - slope * fudge
+        starts.append(intercept)
+        ends.append(fitYEnd)
+    return starts,ends
+
+def DebugPlotStateValueByLinFit(startForce,endForce,force,starts,ends,toRet):
+    plt.figure()
+    plt.subplot(3,1,1)
+    plt.plot(force,'b-')
+    for i,(startV,endV) in enumerate(zip(startForce,endForce)):
+        plt.plot(starts[i],startV,'ro')
+        plt.plot(ends[i],endV,'ro')
+    idxEvent = np.where(toRet > 0)[0]
+    if (idxEvent.size> 0):
+        plt.subplot(3,1,2)
+        plt.plot(idxEvent,force[idxEvent])
+        plt.subplot(3,1,3)
+        plt.plot(idxEvent,toRet[idxEvent])
+    plt.show()
+
+def WalkEventIdx(force,idx,fudge=50):
     """
     Utility function. Given indices at which an event are happening, 'walks' 
     backwards and forwards to the event boundaries, setting everything to 
@@ -69,6 +89,7 @@ def WalkEventIdx(force,idx):
         to be the 'stable' value for that state
      
         idx: indices into force at which we have a transition
+        fudge: window around events...
 
     Returns:
         binary 0/1 array for all the data
@@ -83,25 +104,42 @@ def WalkEventIdx(force,idx):
     # will be the region boundaries before event [i]
     # (so start[i+1] and end[i+1] are the boundaries for event i+1)
     starts = [0] + list(idx)
-    ends = list(idx) + [-1]
-    meds = StateValueByMedian(force,starts,ends)
+    ends = list(idx) + [n-1]
+    startForce,endForce = StateValueByLinearFit(force,starts,ends,fudge)
     # now we (probably) need to update the indices we are returning
     # idxArr will let us mask to the region we are about, relative to
     # our event
     idxArr = np.arange(n)
     for eventNum,i in enumerate(idx):
             # get the median 'Low' and 'hi' (before and after, respectively)
-            medLow = meds[eventNum]
-            medHi = meds[eventNum+1]
+            # low is the end of the last state
+            medLow = endForce[eventNum]
+            # upper bound is the start of the next state
+            medHi = startForce[eventNum+1]
             # last time ([-1]) we are below med, before i
-            set1 = np.where( (force <= medLow) & (idxArr < i))[0][-1]
+            set1 = np.where( (force - medLow <= 0) & (idxArr < i))[0][-1]
             # first time ([0]) we are above med, after i
-            set2 = np.where( (force >= medHi) & (idxArr > i))[0][0]
+            set2 = np.where( (force - medHi >= 0) & (idxArr > i))[0][0]
             toRet[set1:set2] = 1
+            # set the exponential decay on either side
+            end = set2
+            start = set1
+            size = ((end-start)+1)
+            if (end+size > toRet.size or
+                start-size < 0):
+                continue
+            # POST: can decay to end...
+            rangeV = np.arange(0,size)
+            # exponentially decay away from where the think the events are...
+            # after 1 size, we want to be extremely supressed (<1%)
+            decay = np.exp(-10*rangeV/(size))
+            toRet[start-size:start] = decay[::-1]
+            toRet[end:end+size] = decay
+    #DebugPlotStateValueByLinFit(startForce,endForce,force,starts,ends,toRet)
     return toRet
 
 
-def CannyFilter(time,sep,force,Meta,tauMultiple=25,**kwargs):
+def CannyFilter(time,sep,rawForce,Meta,tauMultiple=25,**kwargs):
         """
         Uses a canny filter (from image processing) to detect change points
 
@@ -110,24 +148,29 @@ def CannyFilter(time,sep,force,Meta,tauMultiple=25,**kwargs):
         Returns:
             0/1 matrix if we think there is or isnt an array
         """
-        force = FilterToTau(time,tauMultiple,force)
+        force = FilterToTau(time,tauMultiple,rawForce)
         n = force.size
         minV = np.min(force)
         maxV = np.max(force)
         # normalize the force 
         force -= minV
         force /= (maxV-minV)
+        gradV = np.gradient(force)
+        stdev = np.std(gradV)
+        mu = np.mean(gradV)
         # convert the force to an image, to make Canny happy
         im = np.zeros((n,3))
         im[:,1] = force
         # set the 'sigma' value to our filtering value
         sigma = tauMultiple
-        edges1 = feature.canny(im,sigma=sigma,low_threshold=0.7,
-                               high_threshold=(1-sigma/n),use_quantiles=True)
+        edges1 = feature.canny(im,sigma=sigma,low_threshold=0.8,
+                               high_threshold=(1-10/n),use_quantiles=True)
+        edges2 = feature.canny(im * -1,sigma=sigma,low_threshold=0.8,
+                               high_threshold=(1-10/n),use_quantiles=True)
         # get where the algorithm thinks a transtition is happenening
-        idx = np.where(edges1 == True)[0]
-        idx = WalkEventIdx(force,idx)
-        # switch canny to be between -0.5 and 0.5 
+        idx = np.where((edges1 == True) | (edges2 == True))[0]
+        idx = WalkEventIdx(rawForce,idx)
+        # switch canny to be between -0.5 and 0.5
         return idx - 0.5
 
 def MinMaxNorm(y):
@@ -146,7 +189,7 @@ def HmmFilter(time,step,force,Meta,tauMultiple=25,n_iter=200,n_states=2,
         model.fit([toFit])
         statePredictions = model.predict(toFit)
         whereSwitchIdx = np.where(np.diff(statePredictions) > 0.5)[0]
-        return WalkEventIdx(filterForce,whereSwitchIdx)
+        return WalkEventIdx(force,whereSwitchIdx)
 
 
 def ForwardWaveletTx(time,sep,force,Meta,tauMultiple=25,nWaveletIters=10,
@@ -155,9 +198,9 @@ def ForwardWaveletTx(time,sep,force,Meta,tauMultiple=25,nWaveletIters=10,
         detected = step_detect.mz_fwt(filterData, n=nWaveletIters)
         filtered = np.abs(FilterToTau(time,tauMultiple,
                                       detected - np.median(detected)))
-        minV = min(filtered)
-        maxV = max(filtered)
-        return (filtered-minV)/(maxV-minV)
+        # XXX for now just assumes one event
+        toRet= WalkEventIdx(force,[np.argmax(filtered)])
+        return toRet
 
 def ForceFiltered(time,sep,force,Meta,tauMultiple=25,**kwargs):
         """
@@ -228,6 +271,7 @@ def pFeatureGen(obj,func,*args,**kwargs):
            time,sep, and force are per-window, meta is all the meta information
         """
         meta = obj.Meta
+        Name = obj.HiResData.meta.Name
         timeWindow,sepWindow,forceWindow =  obj.HiResData.GetTimeSepForce()
         toRet = [func(time,sep,force,meta,*args,**kwargs) \
                  for time,sep,force in zip(timeWindow,sepWindow,forceWindow)]

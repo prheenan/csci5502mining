@@ -4,8 +4,14 @@ from FeatureUtils import *
 from pFilters import pFeatureGen,ZScoreByDwell,ForceFiltered,CannyFilter,\
     ForwardWaveletTx
 
+class PerWindowFeatureData:
+    def __init__(self,FeatureByWindow):
+        self.MaxInWindow = [np.max(window) for window in FeatureByWindow]
+        self.MinInWindow = [np.min(window) for window in FeatureByWindow]
+        
 
-def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions,*args,**kwargs):
+
+def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions):
     """
     Returns the NxF Matrix, where N is the size of all data in windows of
     PreProcessedObjects, F is number of feature functions in ListOfFunctions
@@ -19,13 +25,19 @@ def GetFeatureMatrix(PreProcessedObjects,ListOfFunctions,*args,**kwargs):
     Returns:
         NxF feature matrix
     """
-    feature_matrix = [np.concatenate(map(function, PreProcessedObjects))
-                      for function in ListOfFunctions]
-    return feature_matrix
+    featuresByWindows = [map(function, PreProcessedObjects)
+                         for function in ListOfFunctions]
+    feature_matrix = [np.concatenate(feat) for feat in featuresByWindows]
+    feature_info = [PerWindowFeatureData(feat[0])
+                    for feat in featuresByWindows]
+    return feature_matrix,feature_info
 
 
 class FeatureMask:
-
+    def SetFeature(self,name,idx,matrix,meta):
+        featureRow = np.concatenate(matrix[idx][:])
+        setattr(self,name,featureRow)
+        setattr(self,name+"_Meta",meta[idx])
     def __init__(self,PreProcessedObjects,Labels,FilterConst=400):
         myFuncs = [ lambda obj: featureGen(obj,'force','std',FilterConst),
                     lambda obj: featureGen(obj,'force','minmax',FilterConst),
@@ -33,16 +45,16 @@ class FeatureMask:
                     lambda obj: pFeatureGen(obj,ForwardWaveletTx,FilterConst),
                     lambda obj: pFeatureGen(obj,ZScoreByDwell,FilterConst)
                     ]
-        matrix = GetFeatureMatrix(PreProcessedObjects,myFuncs,FilterConst)
+        matrix,metaInf = GetFeatureMatrix(PreProcessedObjects,myFuncs)
         flattenedByFeatures = [np.concatenate(objectV) for objectV in matrix]
         # Matrix: rows are the feature, columns are the (concatenated 
         Matrix = np.array(flattenedByFeatures)
-        
-        self.ForceStd = Matrix[0,:]
-        self.ForceMinMax = Matrix[1,:]
-        self.CannyFilter = Matrix[2,:]
-        self.Forward_Wavelet = Matrix[3,:]
-        self.ForceDwellNormed = Matrix[4,:]
+        # dynamically set the attributes, can get them from self.<Name>
+        self.SetFeature("ForceStd",0,matrix,metaInf)
+        self.SetFeature("ForceMinMax",1,matrix,metaInf)
+        self.SetFeature("CannyFilter",2,matrix,metaInf)
+        self.SetFeature("Forward_Wavelet",3,matrix,metaInf)
+        self.SetFeature("ForceDwellNormed",4,matrix,metaInf)
         self.N = self.ForceStd.size
         # save out label information
         # raw labels is just a copy of all the labels.

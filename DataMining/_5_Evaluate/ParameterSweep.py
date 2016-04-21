@@ -8,7 +8,7 @@ import sys
 DEF_CONST_FULL = [3,5,8,9,10,11,12,13,16,17,18,19,20,22,25,27,30,35,45,50,\
                   75,100,200]
 
-DEF_CONST = [35,40,45,55,60,70,75,85,100,115,130,150]
+DEF_CONST = [2,5,10,15,20,35,40,45,55,60,70,75,85,100,115,130,150]
 from sklearn.cross_validation import KFold
 import PyUtil.PlotUtilities as pPlotUtil
 from DataMining._3_ConvertToFeatures.FeatureGenerator import FeatureMask

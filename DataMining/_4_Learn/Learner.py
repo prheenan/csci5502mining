@@ -115,7 +115,7 @@ class Learner(object):
         canny = mask.CannyFilter+0.5
         # make a 'radius'
         radius = (canny*absZ/max(absZ))**2+(wavelet*second)**2
-        features = [canny,wavelet,radius,absZ,second]
+        features = [canny*wavelet,wavelet,absZ/max(np.abs(absZ))]
         return features
     def DefaultFeatureMatrix(self,mask):
         toRet =  self.FeaturesToMatrix(self.PatricksFeatures(mask))

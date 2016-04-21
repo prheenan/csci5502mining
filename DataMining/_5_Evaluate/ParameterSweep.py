@@ -78,10 +78,10 @@ def GetEvaluation(obj,Labels,LearnerToUse,FilterConst=DEF_CONST,
                "not really cross validating"))
         FoldObj = [ [[0],[0]] ]
     if (FoldObj is None):
-        # use 5-fold validation, or however long if we are smaller.
-        n = min(5,len(obj))
-        # use 75-25 split, so 3 samples is 2-1
-        nFolds = max(3,int(n * 0.75))
+        # how many object do we have?
+        n = len(obj)
+        # (k=10)-fold validation, or the n, whichever is smaller
+        nFolds = min(10,n)
         # create the actual folding object.
         FoldObj = KFold(n, n_folds=nFolds,random_state=42,shuffle=True)
     trainingScores = []

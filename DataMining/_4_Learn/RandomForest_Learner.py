@@ -11,7 +11,7 @@ from _5_Evaluate.ParameterSweep import PlotMask
 import Learner
 
 class ForestOpt:
-    def __init__(self,max_depth=5, n_estimators=10, max_features=2,**kwargs):
+    def __init__(self,max_depth=5, n_estimators=3, max_features=1,**kwargs):
         # any other arguments, set dynamically
         self.max_depth=max_depth
         self.n_estimators=n_estimators

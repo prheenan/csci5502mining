@@ -43,12 +43,24 @@ def StateValueByMedian(Force,Starts,Ends):
     return [np.median(Force[start:end]) \
             for start,end in zip(Starts,Ends)]
 
-def StateValueByLinearFit(Force,Starts,Ends,fudge):
+def StateValueByLinearFit(Force,Starts,Ends):
+    """
+    Given a presummed start an end index for a state, determine the actual
+    bounds by fitting a line between the start and the end, with some 
+    fudge factor excluded
+    
+    Args:
+        Force: the raw force to fit
+        Starts: the start of each state
+        Ends: the ends of each state; Ends[i] is the end pair with Starts[i]
+    Returns:
+        tuple; two Lists of threshholds for the start and end forces 
+    """
     x = np.arange(start=0,stop=Force.size,step=1)
     starts = []
     ends= []
     for start,end in zip(Starts,Ends):
-        sliceV = slice(start+fudge,end-fudge,1)
+        sliceV = slice(start,end,1)
         xTmp = x[sliceV]
         forceTmp = Force[sliceV]
         # fit a line to this region
@@ -56,9 +68,9 @@ def StateValueByLinearFit(Force,Starts,Ends,fudge):
         # get the actual change
         deltaX = (end-start+1)
         # get the y value we would see at 'end', according to the fit
-        fitYEnd = intercept + slope * deltaX
-        # for y, need to walk back by a factor of the fudge factor
-        fitYStart = intercept - slope * fudge
+        fitYEnd = intercept + slope * (deltaX)
+        # for y, just the intercept
+        fitYStart = intercept 
         starts.append(intercept)
         ends.append(fitYEnd)
     return starts,ends
@@ -105,7 +117,7 @@ def WalkEventIdx(force,idx,fudge=50):
     # (so start[i+1] and end[i+1] are the boundaries for event i+1)
     starts = [0] + list(idx)
     ends = list(idx) + [n-1]
-    startForce,endForce = StateValueByLinearFit(force,starts,ends,fudge)
+    startForce,endForce = StateValueByLinearFit(force,starts,ends)
     # now we (probably) need to update the indices we are returning
     # idxArr will let us mask to the region we are about, relative to
     # our event
@@ -117,9 +129,17 @@ def WalkEventIdx(force,idx,fudge=50):
             # upper bound is the start of the next state
             medHi = startForce[eventNum+1]
             # last time ([-1]) we are below med, before i
-            set1 = np.where( (force - medLow <= 0) & (idxArr < i))[0][-1]
+            idx1 = np.where( (force - medLow <= 0) & (idxArr < i))[0]
+            if (idx1.size > 0):
+                set1 = idx1[-1]
+            else:
+                set1 = max(0,i-1)    
             # first time ([0]) we are above med, after i
-            set2 = np.where( (force - medHi >= 0) & (idxArr > i))[0][0]
+            idx2 = np.where( (force - medHi >= 0) & (idxArr > i))[0]
+            if (idx2.size > 0):
+                set2 = idx2[0]
+            else:
+                set2 = min(n-1,i+1)        
             toRet[set1:set2] = 1
             # set the exponential decay on either side
             end = set2

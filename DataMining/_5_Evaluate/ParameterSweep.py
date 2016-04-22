@@ -8,7 +8,7 @@ import sys
 DEF_CONST_FULL = [3,5,8,9,10,11,12,13,16,17,18,19,20,22,25,27,30,35,45,50,\
                   75,100,200]
 
-DEF_CONST = [10,15,20,25,35,40,45,55,60,70,75,85,100,115,130,150]
+DEF_CONST = [2,5,10,15,20,35,40,45,55,60,70,75,85,100,115,130,150]
 from sklearn.cross_validation import KFold
 import PyUtil.PlotUtilities as pPlotUtil
 from DataMining._3_ConvertToFeatures.FeatureGenerator import FeatureMask
@@ -78,10 +78,10 @@ def GetEvaluation(obj,Labels,LearnerToUse,FilterConst=DEF_CONST,
                "not really cross validating"))
         FoldObj = [ [[0],[0]] ]
     if (FoldObj is None):
-        # use 5-fold validation, or however long if we are smaller.
+        # how many object do we have?
         n = len(obj)
-        # use 75-25 split, so 3 samples is 2-1
-        nFolds = min(10,n)
+        # (k=10)-fold validation, or the n, whichever is smaller
+        nFolds = n
         # create the actual folding object.
         FoldObj = KFold(n, n_folds=nFolds,random_state=42,shuffle=True)
     trainingScores = []

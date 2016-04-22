@@ -14,10 +14,11 @@ from DataMining._5_Evaluate.ParameterSweep import GetEvaluation,\
     MakeEvalutionPlot
 from DataMiningUtil.Caching import PreProcessCacher as Cacher
 
-def run(limit=5):
+def run(limit=None):
     outDir = "./DataCache/4_EvalSweeps/"
     # get where the raw data and pre-processed data are
     obj,Labels = Cacher.ReadProcessedFiles(baseDir,limit=limit)
+    print(len(obj))
     evalObj = pCheckUtil.getCheckpoint(outDir + "eval_knn.pkl",
                                        GetEvaluation,True,
                                        obj,Labels,KmeansLearner)

@@ -117,7 +117,6 @@ def GetEvaluation(obj,Labels,LearnerToUse,FilterConst=DEF_CONST,
                 const,trainEval.f_score,trainEval.precision,trainEval.recall))
             print("TEST:\t{:d}\t{:.4f}\t{:.4f}\t{:.4f}".format(
                 const,testEval.f_score,testEval.precision,testEval.recall))
-            # record the scores
             trainV.append(trainEval)
             testV.append(testEval)
         trainingScores.append(trainV)

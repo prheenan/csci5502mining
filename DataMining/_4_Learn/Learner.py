@@ -39,13 +39,24 @@ class EvaluationObject:
         whereOnesActual = np.reshape(np.where(truth == 1)[0],(-1,1))
         whereOnesPred = np.reshape(np.where(predictions == 1)[0],(-1,1))
         if (whereOnesPred.size == 0):
+            self.histZeros = None
+            self.histNoZeros = None
             return
         # POST: at least something to go by...
         _,distActualToPred= pairwise_distances_argmin_min(whereOnesActual,
                                                           whereOnesPred)
-        mean = np.mean(distActualToPred)
-        median = np.median(distActualToPred)
-        maxV = np.max(distActualToPred)
+        self.MeanToLabel = np.mean(distActualToPred)
+        self.MedianToLabel = np.median(distActualToPred)
+        self.MaxToLabel = np.max(distActualToPred)
+        self.MinToLabel = np.min(distActualToPred)
+        maxV = max(distActualToPred)
+        cond = (np.abs(distActualToPred) > 0.5)
+        numWrongByAtLeastOne = sum(cond)
+        nBins = 10
+        bins = np.linspace(start=0,stop=maxV,num=nBins,endpoint=True)
+        self.histZeros = np.histogram(distActualToPred,bins=bins)
+        nonZeroDistance = distActualToPred[np.where(cond)]
+        self.histNoZeros =np.histogram(nonZeroDistance,bins=bins)
             
     
 class Learner(object):

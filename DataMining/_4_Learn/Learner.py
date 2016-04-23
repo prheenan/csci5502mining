@@ -12,23 +12,24 @@ from _5_Evaluate.ParameterSweep import PlotMask
 from sklearn.metrics import  pairwise_distances_argmin_min
 
 
+class IdxDistanceObject:
+    def __init__(self,IdxFrom,IdxTo):
+        _,distActualToPred= pairwise_distances_argmin_min(IdxFrom,IdxTo)
+        self.MeanToLabel = np.mean(distActualToPred)
+        self.MedianToLabel = np.median(distActualToPred)
+        self.MaxToLabel = np.max(distActualToPred)
+        self.MinToLabel = np.min(distActualToPred)
+        maxV = max(distActualToPred)
+        cond = (np.abs(distActualToPred) > 0.5)
+        numWrongByAtLeastOne = sum(cond)
+        nBins = 10
+        bins = np.linspace(start=0,stop=maxV,num=nBins,endpoint=True)
+        self.histZeros = np.histogram(distActualToPred,bins=bins)
+        nonZeroDistance = distActualToPred[np.where(cond)]
+        self.histNoZeros =np.histogram(nonZeroDistance,bins=bins)
+
 class EvaluationObject:
 
-    class IdxDistanceObject:
-        def __init__(self,IdxFrom,IdxTo):
-            _,distActualToPred= pairwise_distances_argmin_min(IdxFrom,IdxTo)
-            self.MeanToLabel = np.mean(distActualToPred)
-            self.MedianToLabel = np.median(distActualToPred)
-            self.MaxToLabel = np.max(distActualToPred)
-            self.MinToLabel = np.min(distActualToPred)
-            maxV = max(distActualToPred)
-            cond = (np.abs(distActualToPred) > 0.5)
-            numWrongByAtLeastOne = sum(cond)
-            nBins = 10
-            bins = np.linspace(start=0,stop=maxV,num=nBins,endpoint=True)
-            self.histZeros = np.histogram(distActualToPred,bins=bins)
-            nonZeroDistance = distActualToPred[np.where(cond)]
-            self.histNoZeros =np.histogram(nonZeroDistance,bins=bins)
             
     def __init__(self,truth,predictions):
         """
@@ -58,10 +59,9 @@ class EvaluationObject:
             self.DistanceFromActual = None
             return
         # POST: at least something to go by...
-        self.DistanceFromActual = EvaluationObject.\
-            IdxDistanceObject(whereOnesActual,whereOnesPred)
-        self.DistanceFromPred = EvaluationObject.\
-            IdxDistanceObject(whereOnesPred,whereOnesActual)
+        self.DistanceFromActual = IdxDistanceObject(whereOnesActual,
+                                                    whereOnesPred)
+        self.DistanceFromPred = IdxDistanceObject(whereOnesPred,whereOnesActual)
             
     
 class Learner(object):

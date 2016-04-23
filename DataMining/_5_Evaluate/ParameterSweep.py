@@ -78,7 +78,7 @@ def GetEvaluation(obj,Labels,LearnerToUse,FilterConst=DEF_CONST,
         # how many object do we have?
         n = len(obj)
         # (k=10)-fold validation, or the n, whichever is smaller
-        nFolds = n
+        nFolds = 3
         # create the actual folding object.
         FoldObj = KFold(n, n_folds=nFolds,random_state=42,shuffle=True)
     trainingScores = []

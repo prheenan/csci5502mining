@@ -14,6 +14,21 @@ from sklearn.metrics import  pairwise_distances_argmin_min
 
 class EvaluationObject:
 
+    class IdxDistanceObject:
+        def __init__(self,IdxFrom,IdxTo):
+            _,distActualToPred= pairwise_distances_argmin_min(IdxFrom,IdxTo)
+            self.MeanToLabel = np.mean(distActualToPred)
+            self.MedianToLabel = np.median(distActualToPred)
+            self.MaxToLabel = np.max(distActualToPred)
+            self.MinToLabel = np.min(distActualToPred)
+            maxV = max(distActualToPred)
+            cond = (np.abs(distActualToPred) > 0.5)
+            numWrongByAtLeastOne = sum(cond)
+            nBins = 10
+            bins = np.linspace(start=0,stop=maxV,num=nBins,endpoint=True)
+            self.histZeros = np.histogram(distActualToPred,bins=bins)
+            nonZeroDistance = distActualToPred[np.where(cond)]
+            self.histNoZeros =np.histogram(nonZeroDistance,bins=bins)
             
     def __init__(self,truth,predictions):
         """
@@ -39,24 +54,14 @@ class EvaluationObject:
         whereOnesActual = np.reshape(np.where(truth == 1)[0],(-1,1))
         whereOnesPred = np.reshape(np.where(predictions == 1)[0],(-1,1))
         if (whereOnesPred.size == 0):
-            self.histZeros = None
-            self.histNoZeros = None
+            self.DistanceFromActual = None
+            self.DistanceFromActual = None
             return
         # POST: at least something to go by...
-        _,distActualToPred= pairwise_distances_argmin_min(whereOnesActual,
-                                                          whereOnesPred)
-        self.MeanToLabel = np.mean(distActualToPred)
-        self.MedianToLabel = np.median(distActualToPred)
-        self.MaxToLabel = np.max(distActualToPred)
-        self.MinToLabel = np.min(distActualToPred)
-        maxV = max(distActualToPred)
-        cond = (np.abs(distActualToPred) > 0.5)
-        numWrongByAtLeastOne = sum(cond)
-        nBins = 10
-        bins = np.linspace(start=0,stop=maxV,num=nBins,endpoint=True)
-        self.histZeros = np.histogram(distActualToPred,bins=bins)
-        nonZeroDistance = distActualToPred[np.where(cond)]
-        self.histNoZeros =np.histogram(nonZeroDistance,bins=bins)
+        self.DistanceFromActual = EvaluationObject.\
+            IdxDistanceObject(whereOnesActual,whereOnesPred)
+        self.DistanceFromPred = EvaluationObject.\
+            IdxDistanceObject(whereOnesPred,whereOnesActual)
             
     
 class Learner(object):

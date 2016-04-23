@@ -18,7 +18,6 @@ def run(limit=None):
     outDir = "./DataCache/4_EvalSweeps/"
     # get where the raw data and pre-processed data are
     obj,Labels = Cacher.ReadProcessedFiles(baseDir,limit=limit)
-    print(len(obj))
     evalObj = pCheckUtil.getCheckpoint(outDir + "eval_knn.pkl",
                                        GetEvaluation,True,
                                        obj,Labels,KmeansLearner)
